@@ -39,6 +39,7 @@ func Configurar(db *gorm.DB) *gin.Engine {
 		eventos := api.Group("/eventos")
 		{
 			eventos.GET("", eventoController.Listar)
+			eventos.GET("/:id", eventoController.ObtenerPorID)
 		}
 	}
 

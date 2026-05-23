@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"errors"
+
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"gorm.io/gorm"
 )
@@ -33,4 +35,17 @@ func (d *EventoDAO) ListarActivos(categoria, search string) ([]domain.Evento, er
 	}
 
 	return eventos, nil
+}
+
+// BuscarPorID retorna el evento con ese ID, o nil si no existe.
+func (d *EventoDAO) BuscarPorID(id uint) (*domain.Evento, error) {
+	var evento domain.Evento
+	err := d.db.First(&evento, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &evento, nil
 }
