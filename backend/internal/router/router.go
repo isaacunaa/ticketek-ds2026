@@ -22,6 +22,11 @@ func Configurar(db *gorm.DB) *gin.Engine {
 	authService := services.NuevoAuthService(usuarioDAO)
 	authController := controllers.NuevoAuthController(authService)
 
+	// Inicialización de capas para eventos
+	eventoDAO := dao.NuevoEventoDAO(db)
+	eventoService := services.NuevoEventoService(eventoDAO)
+	eventoController := controllers.NuevoEventoController(eventoService)
+
 	// Rutas agrupadas bajo /api/v1
 	api := r.Group("/api/v1")
 	{
@@ -29,6 +34,11 @@ func Configurar(db *gorm.DB) *gin.Engine {
 		{
 			auth.POST("/register", authController.Registrar)
 			auth.POST("/login", authController.Login)
+		}
+
+		eventos := api.Group("/eventos")
+		{
+			eventos.GET("", eventoController.Listar)
 		}
 	}
 
