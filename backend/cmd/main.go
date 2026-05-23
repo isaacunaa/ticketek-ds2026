@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/isaacunaa/ticketek-ds2026/backend/internal/config"
 	"github.com/gin-gonic/gin"
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/config"
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -24,7 +25,16 @@ func main() {
 	}
 	log.Println("Conexión exitosa a MySQL")
 
-	_ = db
+	err = db.AutoMigrate(
+		&domain.Usuario{},
+		&domain.Evento{},
+		&domain.Entrada{},
+		&domain.Favorito{},
+	)
+	if err != nil {
+		log.Fatal("Error en AutoMigrate: ", err)
+	}
+	log.Println("Migraciones aplicadas correctamente")
 
 	r := gin.Default()
 
