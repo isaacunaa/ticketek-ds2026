@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gin-gonic/gin"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/config"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/router"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -36,11 +36,7 @@ func main() {
 	}
 	log.Println("Migraciones aplicadas correctamente")
 
-	r := gin.Default()
-
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
-	})
+	r := router.Configurar(db)
 
 	log.Printf("Servidor escuchando en puerto %s", cfg.ServerPort)
 	if err := r.Run(":" + cfg.ServerPort); err != nil {
