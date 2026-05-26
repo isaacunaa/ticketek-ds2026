@@ -28,7 +28,7 @@ func Configurar(db *gorm.DB) *gin.Engine {
 
 	// Entradas
 	entradaDAO := dao.NuevoEntradaDAO(db)
-	entradaService := services.NuevoEntradaService(entradaDAO, eventoDAO, db)
+	entradaService := services.NuevoEntradaService(entradaDAO, eventoDAO, usuarioDAO, db)
 	entradaController := controllers.NuevoEntradaController(entradaService)
 	
 	api := r.Group("/api/v1")
@@ -50,7 +50,9 @@ func Configurar(db *gorm.DB) *gin.Engine {
 		protegido.Use(middleware.AutenticacionJWT())
 		{
 			protegido.POST("/entradas", entradaController.Comprar)
-			protegido.GET("/entradas/me", entradaController.MisEntradas)	
+			protegido.GET("/entradas/me", entradaController.MisEntradas)
+			protegido.DELETE("/entradas/:id", entradaController.Cancelar)
+			protegido.POST("/entradas/:id/transfer", entradaController.Traspasar)
 		}
 	}
 

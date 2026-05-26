@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"errors"
+
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"gorm.io/gorm"
 )
@@ -40,4 +42,39 @@ func (d *EntradaDAO) ListarPorUsuario(usuarioID uint) ([]domain.Entrada, error) 
 		Where("usuario_id = ?", usuarioID).
 		Find(&entradas).Error
 	return entradas, err
+}
+
+// BuscarPorID retorna la entrada con ese ID (con Evento precargado), o nil si no existe.
+func (d *EntradaDAO) BuscarPorID(id uint) (*domain.Entrada, error) {
+	var entrada domain.Entrada
+	err := d.db.Preload("Evento").First(&entrada, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &entrada, nil
+}
+
+// CambiarEstado actualiza el campo estado de una entrada dentro de una transacción.
+func (d *EntradaDAO) CambiarEstado(tx *gorm.DB, entradaID uint, nuevoEstado string) error {
+	return tx.Model(&domain.Entrada{}).
+		Where("id = ?", entradaID).
+		UpdateColumn("estado", nuevoEstado).Error
+}
+
+// DevolverCupo suma 1 a cupo_disponible del evento dentro de una transacción.
+// Es el inverso de DescontarCupo y se usa al cancelar una entrada.
+func (d *EntradaDAO) DevolverCupo(tx *gorm.DB, eventoID uint) error {
+	return tx.Model(&domain.Evento{}).
+		Where("id = ?", eventoID).
+		UpdateColumn("cupo_disponible", gorm.Expr("cupo_disponible + 1")).Error
+}
+
+// CambiarDueno actualiza el usuario_id de la entrada dentro de una transacción.
+func (d *EntradaDAO) CambiarDueno(tx *gorm.DB, entradaID uint, nuevoUsuarioID uint) error {
+	return tx.Model(&domain.Entrada{}).
+		Where("id = ?", entradaID).
+		UpdateColumn("usuario_id", nuevoUsuarioID).Error
 }

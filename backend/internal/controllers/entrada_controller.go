@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/services"
@@ -59,4 +60,71 @@ func (c *EntradaController) MisEntradas(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"entradas": entradas})
+}
+
+// Cancelar maneja DELETE /api/v1/entradas/:id
+func (c *EntradaController) Cancelar(ctx *gin.Context) {
+	entradaID, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "id de entrada inválido"})
+		return
+	}
+
+	usuarioID := ctx.GetUint("usuario_id")
+
+	if err := c.entradaService.Cancelar(usuarioID, uint(entradaID)); err != nil {
+		switch {
+		case errors.Is(err, services.ErrEntradaNoEncontrada):
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		case errors.Is(err, services.ErrNoEsDueno):
+			ctx.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		case errors.Is(err, services.ErrEntradaNoActiva):
+			ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error al cancelar la entrada"})
+		}
+		return
+	}
+
+	ctx.Status(http.StatusNoContent)
+}
+
+type TraspasoRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+// Traspasar maneja POST /api/v1/entradas/:id/transfer
+func (c *EntradaController) Traspasar(ctx *gin.Context) {
+	entradaID, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "id de entrada inválido"})
+		return
+	}
+
+	var req TraspasoRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	usuarioID := ctx.GetUint("usuario_id")
+
+	entrada, err := c.entradaService.Traspasar(usuarioID, uint(entradaID), req.Email)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrEntradaNoEncontrada):
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		case errors.Is(err, services.ErrNoEsDueno):
+			ctx.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		case errors.Is(err, services.ErrEntradaNoActiva):
+			ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		case errors.Is(err, services.ErrDestinatarioNoExiste):
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error al traspasar la entrada"})
+		}
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"entrada": entrada})
 }
