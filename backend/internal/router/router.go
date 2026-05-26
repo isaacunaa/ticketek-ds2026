@@ -4,30 +4,28 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/controllers"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dao"
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/middleware"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/services"
 	"gorm.io/gorm"
 )
 
-// Configurar arma todas las rutas de la aplicación y retorna el engine de Gin.
 func Configurar(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
 
-	// Health check
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	// Inicialización de capas para auth
+	// Auth
 	usuarioDAO := dao.NuevoUsuarioDAO(db)
 	authService := services.NuevoAuthService(usuarioDAO)
 	authController := controllers.NuevoAuthController(authService)
 
-	// Inicialización de capas para eventos
+	// Eventos
 	eventoDAO := dao.NuevoEventoDAO(db)
 	eventoService := services.NuevoEventoService(eventoDAO)
 	eventoController := controllers.NuevoEventoController(eventoService)
 
-	// Rutas agrupadas bajo /api/v1
 	api := r.Group("/api/v1")
 	{
 		auth := api.Group("/auth")
@@ -40,6 +38,14 @@ func Configurar(db *gorm.DB) *gin.Engine {
 		{
 			eventos.GET("", eventoController.Listar)
 			eventos.GET("/:id", eventoController.ObtenerPorID)
+		}
+
+		// Rutas protegidas — requieren JWT valido
+		protegido := api.Group("")
+		protegido.Use(middleware.AutenticacionJWT())
+		{
+			// Acá van los endpoints autenticados
+			// Se completan en los proximos pasos
 		}
 	}
 
