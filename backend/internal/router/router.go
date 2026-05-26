@@ -26,6 +26,11 @@ func Configurar(db *gorm.DB) *gin.Engine {
 	eventoService := services.NuevoEventoService(eventoDAO)
 	eventoController := controllers.NuevoEventoController(eventoService)
 
+	// Entradas
+	entradaDAO := dao.NuevoEntradaDAO(db)
+	entradaService := services.NuevoEntradaService(entradaDAO, eventoDAO, db)
+	entradaController := controllers.NuevoEntradaController(entradaService)
+	
 	api := r.Group("/api/v1")
 	{
 		auth := api.Group("/auth")
@@ -44,8 +49,8 @@ func Configurar(db *gorm.DB) *gin.Engine {
 		protegido := api.Group("")
 		protegido.Use(middleware.AutenticacionJWT())
 		{
-			// Acá van los endpoints autenticados
-			// Se completan en los proximos pasos
+			protegido.POST("/entradas", entradaController.Comprar)
+			protegido.GET("/entradas/me", entradaController.MisEntradas)	
 		}
 	}
 
