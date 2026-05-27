@@ -1,0 +1,45 @@
+import { Link } from 'react-router-dom'
+
+export default function Footer() {
+  const year = new Date().getFullYear()
+
+  return (
+    <footer className="footer">
+      <div className="footer-inner">
+        {/* Marca */}
+        <div>
+          <p className="footer-brand-name">Ticketek</p>
+          <p className="footer-brand-desc">
+            Tu plataforma de tickets para eventos de música, teatro, deportes y más.
+          </p>
+        </div>
+
+        {/* Navegación */}
+        <div>
+          <p className="footer-col-title">Navegación</p>
+          <ul className="footer-links">
+            <li><Link to="/">Eventos</Link></li>
+            <li><Link to="/mis-entradas">Mis entradas</Link></li>
+            <li><Link to="/register">Crear cuenta</Link></li>
+            <li><Link to="/login">Iniciar sesión</Link></li>
+          </ul>
+        </div>
+
+        {/* Legal */}
+        <div>
+          <p className="footer-col-title">Legal</p>
+          <ul className="footer-links">
+            <li><a href="#">Términos y condiciones</a></li>
+            <li><a href="#">Política de privacidad</a></li>
+            <li><a href="#">Política de reembolso</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="footer-bottom">
+        <span>© {year} Ticketek. Todos los derechos reservados.</span>
+        <span>Trabajo final — Desarrollo de Software {year}</span>
+      </div>
+    </footer>
+  )
+}
