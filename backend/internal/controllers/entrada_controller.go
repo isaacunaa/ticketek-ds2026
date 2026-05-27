@@ -10,10 +10,10 @@ import (
 )
 
 type EntradaController struct {
-	entradaService *services.EntradaService
+	entradaService IEntradaService
 }
 
-func NuevoEntradaController(entradaService *services.EntradaService) *EntradaController {
+func NuevoEntradaController(entradaService IEntradaService) *EntradaController {
 	return &EntradaController{entradaService: entradaService}
 }
 

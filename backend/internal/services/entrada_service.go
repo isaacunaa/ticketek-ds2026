@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dao"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"gorm.io/gorm"
 )
@@ -20,13 +19,13 @@ var (
 )
 
 type EntradaService struct {
-	entradaDAO *dao.EntradaDAO
-	eventoDAO  *dao.EventoDAO
-	usuarioDAO *dao.UsuarioDAO
-	db         *gorm.DB
+	entradaDAO IEntradaDAO
+	eventoDAO  IEventoDAO
+	usuarioDAO IUsuarioDAO
+	db         ITransactor
 }
 
-func NuevoEntradaService(entradaDAO *dao.EntradaDAO, eventoDAO *dao.EventoDAO, usuarioDAO *dao.UsuarioDAO, db *gorm.DB) *EntradaService {
+func NuevoEntradaService(entradaDAO IEntradaDAO, eventoDAO IEventoDAO, usuarioDAO IUsuarioDAO, db ITransactor) *EntradaService {
 	return &EntradaService{
 		entradaDAO: entradaDAO,
 		eventoDAO:  eventoDAO,

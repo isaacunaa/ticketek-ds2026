@@ -3,17 +3,16 @@ package services
 import (
 	"errors"
 
-	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dao"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 )
 
 var ErrEventoNoEncontrado = errors.New("evento no encontrado")
 
 type EventoService struct {
-	eventoDAO *dao.EventoDAO
+	eventoDAO IEventoDAO
 }
 
-func NuevoEventoService(eventoDAO *dao.EventoDAO) *EventoService {
+func NuevoEventoService(eventoDAO IEventoDAO) *EventoService {
 	return &EventoService{eventoDAO: eventoDAO}
 }
 
