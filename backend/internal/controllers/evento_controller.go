@@ -10,10 +10,10 @@ import (
 )
 
 type EventoController struct {
-	eventoService *services.EventoService
+	eventoService IEventoService
 }
 
-func NuevoEventoController(eventoService *services.EventoService) *EventoController {
+func NuevoEventoController(eventoService IEventoService) *EventoController {
 	return &EventoController{eventoService: eventoService}
 }
 

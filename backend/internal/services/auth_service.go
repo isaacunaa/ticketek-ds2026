@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 
-	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dao"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/utils"
 )
@@ -14,10 +13,10 @@ var (
 )
 
 type AuthService struct {
-	usuarioDAO *dao.UsuarioDAO
+	usuarioDAO IUsuarioDAO
 }
 
-func NuevoAuthService(usuarioDAO *dao.UsuarioDAO) *AuthService {
+func NuevoAuthService(usuarioDAO IUsuarioDAO) *AuthService {
 	return &AuthService{usuarioDAO: usuarioDAO}
 }
 
