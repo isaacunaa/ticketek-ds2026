@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
+import vortice_icon from '../assets/vortice_favicon.svg'
 
 export default function Header() {
   const navigate = useNavigate()
@@ -13,7 +14,10 @@ export default function Header() {
 
   return (
     <header className="header">
-      <Link to="/" className="header-logo">Ticketek</Link>
+      <Link to="/" className="header-logo">
+        <img src={vortice_icon} alt="" className="header-logo-img" />
+        <span className="header-logo-text">Vórtice</span>
+      </Link>
 
       <nav className="header-nav">
         <Link to="/" className="header-nav-link">Eventos</Link>
