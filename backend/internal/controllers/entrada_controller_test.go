@@ -50,8 +50,8 @@ func deleteReq(r *gin.Engine, path string) *httptest.ResponseRecorder {
 
 func TestComprar_Exito(t *testing.T) {
 	mockSvc := new(MockEntradaService)
-	entrada := &domain.Entrada{ID: 1, EventoID: 5, UsuarioID: 10, Estado: "activa"}
-	mockSvc.On("Comprar", uint(10), uint(5)).Return(entrada, nil)
+	entrada := domain.Entrada{ID: 1, EventoID: 5, UsuarioID: 10, Estado: "activa"}
+	mockSvc.On("Comprar", uint(10), uint(5), 1).Return([]domain.Entrada{entrada}, nil)
 
 	w := postJSON(routerEntrada(mockSvc, 10), "/entradas", map[string]interface{}{
 		"evento_id": 5,
@@ -73,7 +73,7 @@ func TestComprar_BodyInvalido(t *testing.T) {
 
 func TestComprar_EventoNoDisponible(t *testing.T) {
 	mockSvc := new(MockEntradaService)
-	mockSvc.On("Comprar", uint(10), uint(99)).Return(nil, services.ErrEventoNoDisponible)
+	mockSvc.On("Comprar", uint(10), uint(99), 1).Return(nil, services.ErrEventoNoDisponible)
 
 	w := postJSON(routerEntrada(mockSvc, 10), "/entradas", map[string]interface{}{
 		"evento_id": 99,
@@ -85,7 +85,7 @@ func TestComprar_EventoNoDisponible(t *testing.T) {
 
 func TestComprar_SinCupo(t *testing.T) {
 	mockSvc := new(MockEntradaService)
-	mockSvc.On("Comprar", uint(10), uint(3)).Return(nil, services.ErrSinCupo)
+	mockSvc.On("Comprar", uint(10), uint(3), 1).Return(nil, services.ErrSinCupo)
 
 	w := postJSON(routerEntrada(mockSvc, 10), "/entradas", map[string]interface{}{
 		"evento_id": 3,
@@ -97,7 +97,7 @@ func TestComprar_SinCupo(t *testing.T) {
 
 func TestComprar_ErrorInterno(t *testing.T) {
 	mockSvc := new(MockEntradaService)
-	mockSvc.On("Comprar", uint(10), uint(1)).Return(nil, errors.New("fallo de BD"))
+	mockSvc.On("Comprar", uint(10), uint(1), 1).Return(nil, errors.New("fallo de BD"))
 
 	w := postJSON(routerEntrada(mockSvc, 10), "/entradas", map[string]interface{}{
 		"evento_id": 1,
