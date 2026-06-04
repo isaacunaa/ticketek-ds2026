@@ -92,13 +92,20 @@ export default function Home() {
     setError('')
     try {
       const params = {}
-      if (searchVal.trim())        params.search    = searchVal.trim()
-      if (catVal !== 'Todos')      params.categoria = catVal
+      if (searchVal.trim()) params.search = searchVal.trim()
 
       const { data } = await client.get('/eventos', { params })
-      const lista = Array.isArray(data)
+      let lista = Array.isArray(data)
         ? data
         : data.eventos ?? data.data ?? []
+
+      if (catVal !== 'Todos') {
+        lista = lista.filter(ev => {
+          if (!ev.categoria) return false
+          return ev.categoria.split(',').map(c => c.trim()).includes(catVal)
+        })
+      }
+
       setEventos(lista)
     } catch (err) {
       setError('No se pudieron cargar los eventos. Verificá que el backend esté corriendo en http://localhost:8080.')
