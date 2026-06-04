@@ -13,7 +13,12 @@ const EMOJI = {
   'tecnología':  '💻',
   'espectáculo': '🎪',
 }
-const getEmoji = (cat) => EMOJI[cat?.toLowerCase()] ?? '🎉'
+const getEmoji = (cat) => {
+  if (!cat) return '🎉'
+  const cats = cat.split(',').map(c => c.trim().toLowerCase())
+  for (const c of cats) { if (EMOJI[c]) return EMOJI[c] }
+  return '🎉'
+}
 
 const CATEGORIAS = [
   { label: 'Todos',        value: 'Todos' },
@@ -48,7 +53,11 @@ function EventCard({ evento }) {
 
       <div className="event-body">
         {evento.categoria && (
-          <span className="event-category-badge">{evento.categoria}</span>
+          <div className="event-badges">
+            {evento.categoria.split(',').map(c => c.trim()).map(c => (
+              <span key={c} className="event-category-badge">{c}</span>
+            ))}
+          </div>
         )}
         <h3 className="event-title">{nombre}</h3>
         {evento.lugar && <p className="event-venue">📍 {evento.lugar}</p>}
@@ -78,13 +87,13 @@ export default function Home() {
   // Ref para el input del hero
   const inputRef = useRef(null)
 
-  const fetchEventos = useCallback(async () => {
+  const fetchEventos = useCallback(async (searchVal, catVal) => {
     setLoading(true)
     setError('')
     try {
       const params = {}
-      if (search.trim())               params.search    = search.trim()
-      if (categoria.value !== 'Todos') params.categoria = categoria.value
+      if (searchVal.trim())        params.search    = searchVal.trim()
+      if (catVal !== 'Todos')      params.categoria = catVal
 
       const { data } = await client.get('/eventos', { params })
       const lista = Array.isArray(data)
@@ -97,14 +106,16 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
-  }, [search, categoria])
+  }, [])
 
-  // Fetch en montaje y cuando cambia la categoría (inmediato)
-  useEffect(() => { fetchEventos() }, [categoria.value]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Fetch cuando cambia la categoría (inmediato)
+  useEffect(() => {
+    fetchEventos(search, categoria.value)
+  }, [categoria.value]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounce del buscador (400 ms)
   useEffect(() => {
-    const t = setTimeout(() => { fetchEventos() }, 400)
+    const t = setTimeout(() => { fetchEventos(search, categoria.value) }, 400)
     return () => clearTimeout(t)
   }, [search]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -160,7 +171,7 @@ export default function Home() {
         {!loading && error && (
           <div className="state-box" style={{ color: 'var(--danger)' }}>
             <p>⚠️ {error}</p>
-            <button className="btn-retry" onClick={fetchEventos}>Reintentar</button>
+            <button className="btn-retry" onClick={() => fetchEventos(search, categoria.value)}>Reintentar</button>
           </div>
         )}
 

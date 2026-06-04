@@ -93,7 +93,7 @@ func seedEventos(db *gorm.DB) {
 			FechaHora:       time.Date(2026, 5, 15, 21, 0, 0, 0, time.UTC),
 			DuracionMinutos: 90,
 			Ubicacion:       "Teatro Gran Rex, Buenos Aires",
-			Categoria:       "teatro",
+			Categoria:       "teatro,humor",
 			CupoTotal:       1200,
 			CupoDisponible:  1200,
 			Precio:          8000,

@@ -115,7 +115,11 @@ export default function EventoDetalle() {
 
             <div className="detalle-content">
               {evento.categoria && (
-                <span className="detalle-badge">{evento.categoria}</span>
+                <div className="event-badges">
+                  {evento.categoria.split(',').map(c => c.trim()).map(c => (
+                    <span key={c} className="detalle-badge">{c}</span>
+                  ))}
+                </div>
               )}
 
               <h1 className="detalle-title">{nombre}</h1>

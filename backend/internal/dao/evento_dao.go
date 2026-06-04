@@ -28,7 +28,7 @@ func (d *EventoDAO) ListarActivos(categoria, search string) ([]domain.Evento, er
 	query := d.db.Where("estado = ?", "activo")
 
 	if categoria != "" {
-		query = query.Where("categoria = ?", categoria)
+		query = query.Where("FIND_IN_SET(?, categoria) > 0", categoria)
 	}
 
 	if search != "" {
