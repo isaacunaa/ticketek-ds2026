@@ -3,25 +3,29 @@ package services
 import (
 	"errors"
 
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dao"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 )
 
 var ErrEventoNoEncontrado = errors.New("evento no encontrado")
 
-type EventoService struct {
-	eventoDAO IEventoDAO
+type IEventoService interface {
+	ListarEventos(categoria, search string) ([]domain.Evento, error)
+	ObtenerEventoPorID(id uint) (*domain.Evento, error)
 }
 
-func NuevoEventoService(eventoDAO IEventoDAO) *EventoService {
+type EventoService struct {
+	eventoDAO dao.IEventoDAO
+}
+
+func NuevoEventoService(eventoDAO dao.IEventoDAO) *EventoService {
 	return &EventoService{eventoDAO: eventoDAO}
 }
 
-// ListarEventos retorna los eventos activos, con filtros opcionales.
 func (s *EventoService) ListarEventos(categoria, search string) ([]domain.Evento, error) {
 	return s.eventoDAO.ListarActivos(categoria, search)
 }
 
-// ObtenerEventoPorID retorna un evento por su ID, sin importar su estado.
 func (s *EventoService) ObtenerEventoPorID(id uint) (*domain.Evento, error) {
 	evento, err := s.eventoDAO.BuscarPorID(id)
 	if err != nil {

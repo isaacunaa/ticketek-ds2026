@@ -6,24 +6,21 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dtos"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/services"
 )
 
 type EntradaController struct {
-	entradaService IEntradaService
+	entradaService services.IEntradaService
 }
 
-func NuevoEntradaController(entradaService IEntradaService) *EntradaController {
+func NuevoEntradaController(entradaService services.IEntradaService) *EntradaController {
 	return &EntradaController{entradaService: entradaService}
-}
-
-type ComprarRequest struct {
-	EventoID uint `json:"evento_id" binding:"required"`
 }
 
 // Comprar maneja POST /api/v1/entradas
 func (c *EntradaController) Comprar(ctx *gin.Context) {
-	var req ComprarRequest
+	var req dtos.ComprarRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -89,10 +86,6 @@ func (c *EntradaController) Cancelar(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-type TraspasoRequest struct {
-	Email string `json:"email" binding:"required,email"`
-}
-
 // Traspasar maneja POST /api/v1/entradas/:id/transfer
 func (c *EntradaController) Traspasar(ctx *gin.Context) {
 	entradaID, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
@@ -101,7 +94,7 @@ func (c *EntradaController) Traspasar(ctx *gin.Context) {
 		return
 	}
 
-	var req TraspasoRequest
+	var req dtos.TraspasoRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

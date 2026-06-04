@@ -18,7 +18,7 @@ func init() {
 	gin.SetMode(gin.TestMode)
 }
 
-func routerAuth(svc IAuthService) *gin.Engine {
+func routerAuth(svc services.IAuthService) *gin.Engine {
 	r := gin.New()
 	ctrl := NuevoAuthController(svc)
 	r.POST("/auth/register", ctrl.Registrar)

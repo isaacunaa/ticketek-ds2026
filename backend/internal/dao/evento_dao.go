@@ -7,6 +7,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type IEventoDAO interface {
+	ListarActivos(categoria, search string) ([]domain.Evento, error)
+	BuscarPorID(id uint) (*domain.Evento, error)
+}
+
 type EventoDAO struct {
 	db *gorm.DB
 }

@@ -1,31 +1,44 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dao"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"gorm.io/gorm"
 )
 
 var (
-	ErrEventoNoDisponible  = errors.New("el evento no existe o no está activo")
-	ErrSinCupo             = errors.New("no hay cupo disponible para este evento")
-	ErrEntradaNoEncontrada = errors.New("la entrada no existe")
-	ErrNoEsDueno           = errors.New("no tenés permiso para modificar esta entrada")
-	ErrEntradaNoActiva     = errors.New("la entrada no está activa")
+	ErrEventoNoDisponible   = errors.New("el evento no existe o no está activo")
+	ErrSinCupo              = errors.New("no hay cupo disponible para este evento")
+	ErrEntradaNoEncontrada  = errors.New("la entrada no existe")
+	ErrNoEsDueno            = errors.New("no tenés permiso para modificar esta entrada")
+	ErrEntradaNoActiva      = errors.New("la entrada no está activa")
 	ErrDestinatarioNoExiste = errors.New("el destinatario no existe en el sistema")
 )
 
+type ITransactor interface {
+	Transaction(fc func(tx *gorm.DB) error, opts ...*sql.TxOptions) error
+}
+
+type IEntradaService interface {
+	Comprar(usuarioID, eventoID uint) (*domain.Entrada, error)
+	ListarPorUsuario(usuarioID uint) ([]domain.Entrada, error)
+	Cancelar(usuarioID, entradaID uint) error
+	Traspasar(usuarioID, entradaID uint, emailDestinatario string) (*domain.Entrada, error)
+}
+
 type EntradaService struct {
-	entradaDAO IEntradaDAO
-	eventoDAO  IEventoDAO
-	usuarioDAO IUsuarioDAO
+	entradaDAO dao.IEntradaDAO
+	eventoDAO  dao.IEventoDAO
+	usuarioDAO dao.IUsuarioDAO
 	db         ITransactor
 }
 
-func NuevoEntradaService(entradaDAO IEntradaDAO, eventoDAO IEventoDAO, usuarioDAO IUsuarioDAO, db ITransactor) *EntradaService {
+func NuevoEntradaService(entradaDAO dao.IEntradaDAO, eventoDAO dao.IEventoDAO, usuarioDAO dao.IUsuarioDAO, db ITransactor) *EntradaService {
 	return &EntradaService{
 		entradaDAO: entradaDAO,
 		eventoDAO:  eventoDAO,
@@ -34,9 +47,7 @@ func NuevoEntradaService(entradaDAO IEntradaDAO, eventoDAO IEventoDAO, usuarioDA
 	}
 }
 
-// Comprar procesa la compra de una entrada dentro de una transacción.
 func (s *EntradaService) Comprar(usuarioID, eventoID uint) (*domain.Entrada, error) {
-	// Verificar que el evento existe y está activo ANTES de abrir la transacción
 	evento, err := s.eventoDAO.BuscarPorID(eventoID)
 	if err != nil {
 		return nil, err
@@ -47,9 +58,7 @@ func (s *EntradaService) Comprar(usuarioID, eventoID uint) (*domain.Entrada, err
 
 	var entrada *domain.Entrada
 
-	// Transacción: descontar cupo y crear entrada de forma atómica
 	err = s.db.Transaction(func(tx *gorm.DB) error {
-		// Descontar cupo (falla si cupo_disponible = 0)
 		if err := s.entradaDAO.DescontarCupo(tx, eventoID); err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return ErrSinCupo
@@ -57,7 +66,6 @@ func (s *EntradaService) Comprar(usuarioID, eventoID uint) (*domain.Entrada, err
 			return err
 		}
 
-		// Crear la entrada
 		entrada = &domain.Entrada{
 			EventoID:     eventoID,
 			UsuarioID:    usuarioID,
@@ -77,13 +85,10 @@ func (s *EntradaService) Comprar(usuarioID, eventoID uint) (*domain.Entrada, err
 	return entrada, nil
 }
 
-// ListarPorUsuario retorna todas las entradas del usuario.
 func (s *EntradaService) ListarPorUsuario(usuarioID uint) ([]domain.Entrada, error) {
 	return s.entradaDAO.ListarPorUsuario(usuarioID)
 }
 
-// Cancelar cambia el estado de la entrada a 'cancelada' y devuelve el cupo al evento.
-// Solo el dueño puede cancelar, y la entrada debe estar activa.
 func (s *EntradaService) Cancelar(usuarioID, entradaID uint) error {
 	entrada, err := s.entradaDAO.BuscarPorID(entradaID)
 	if err != nil {
@@ -107,8 +112,6 @@ func (s *EntradaService) Cancelar(usuarioID, entradaID uint) error {
 	})
 }
 
-// Traspasar cambia el dueño de la entrada al destinatario indicado por email.
-// Solo el dueño puede traspasar, y la entrada debe estar activa.
 func (s *EntradaService) Traspasar(usuarioID, entradaID uint, emailDestinatario string) (*domain.Entrada, error) {
 	entrada, err := s.entradaDAO.BuscarPorID(entradaID)
 	if err != nil {
@@ -139,6 +142,5 @@ func (s *EntradaService) Traspasar(usuarioID, entradaID uint, emailDestinatario 
 		return nil, err
 	}
 
-	// Recargar la entrada actualizada para devolverla en la respuesta
 	return s.entradaDAO.BuscarPorID(entradaID)
 }

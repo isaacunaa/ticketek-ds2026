@@ -16,7 +16,7 @@ import (
 
 // routerEntrada arma el router de test inyectando usuarioID en el contexto
 // para simular el middleware JWT, sin necesitar un token real.
-func routerEntrada(svc IEntradaService, usuarioID uint) *gin.Engine {
+func routerEntrada(svc services.IEntradaService, usuarioID uint) *gin.Engine {
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
 		c.Set("usuario_id", usuarioID)
