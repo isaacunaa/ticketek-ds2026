@@ -7,6 +7,7 @@ import (
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/config"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/router"
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/seed"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -35,6 +36,8 @@ func main() {
 		log.Fatal("Error en AutoMigrate: ", err)
 	}
 	log.Println("Migraciones aplicadas correctamente")
+
+	seed.Ejecutar(db)
 
 	r := router.Configurar(db)
 
