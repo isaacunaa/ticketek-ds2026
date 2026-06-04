@@ -105,7 +105,7 @@ Cobertura actual: **88% en services**, **96% en controllers**.
 
 ## Diagrama de base de datos
 
-Ver `/docs/diagrama-er.png`
+![Diagrama ER](docs/diagrama-er.png)
 
 ---
 
