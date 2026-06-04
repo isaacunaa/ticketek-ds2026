@@ -104,6 +104,35 @@ func (m *MockEntradaDAO) CambiarDueno(tx *gorm.DB, entradaID uint, nuevoUsuarioI
 	return args.Error(0)
 }
 
+// ── MockFavoritoDAO ───────────────────────────────────────────────────────────
+
+type MockFavoritoDAO struct {
+	mock.Mock
+}
+
+func (m *MockFavoritoDAO) Agregar(favorito *domain.Favorito) error {
+	args := m.Called(favorito)
+	return args.Error(0)
+}
+
+func (m *MockFavoritoDAO) Quitar(usuarioID, eventoID uint) error {
+	args := m.Called(usuarioID, eventoID)
+	return args.Error(0)
+}
+
+func (m *MockFavoritoDAO) Listar(usuarioID uint) ([]domain.Favorito, error) {
+	args := m.Called(usuarioID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Favorito), args.Error(1)
+}
+
+func (m *MockFavoritoDAO) Existe(usuarioID, eventoID uint) (bool, error) {
+	args := m.Called(usuarioID, eventoID)
+	return args.Bool(0), args.Error(1)
+}
+
 // ── MockTransactor ────────────────────────────────────────────────────────────
 
 // MockTransactor implementa ITransactor ejecutando el callback con tx=nil.

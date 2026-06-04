@@ -49,6 +49,30 @@ func (m *MockEventoService) ObtenerEventoPorID(id uint) (*domain.Evento, error) 
 	return args.Get(0).(*domain.Evento), args.Error(1)
 }
 
+// ── MockFavoritoService ───────────────────────────────────────────────────────
+
+type MockFavoritoService struct {
+	mock.Mock
+}
+
+func (m *MockFavoritoService) Agregar(usuarioID, eventoID uint) error {
+	args := m.Called(usuarioID, eventoID)
+	return args.Error(0)
+}
+
+func (m *MockFavoritoService) Quitar(usuarioID, eventoID uint) error {
+	args := m.Called(usuarioID, eventoID)
+	return args.Error(0)
+}
+
+func (m *MockFavoritoService) Listar(usuarioID uint) ([]domain.Favorito, error) {
+	args := m.Called(usuarioID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Favorito), args.Error(1)
+}
+
 // ── MockEntradaService ────────────────────────────────────────────────────────
 
 type MockEntradaService struct {

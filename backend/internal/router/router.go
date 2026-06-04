@@ -38,6 +38,11 @@ func Configurar(db *gorm.DB) *gin.Engine {
 	entradaDAO := dao.NuevoEntradaDAO(db)
 	entradaService := services.NuevoEntradaService(entradaDAO, eventoDAO, usuarioDAO, db)
 	entradaController := controllers.NuevoEntradaController(entradaService)
+
+	// Favoritos
+	favoritoDAO := dao.NuevoFavoritoDAO(db)
+	favoritoService := services.NuevoFavoritoService(favoritoDAO, eventoDAO)
+	favoritoController := controllers.NuevoFavoritoController(favoritoService)
 	
 	api := r.Group("/api/v1")
 	{
@@ -61,6 +66,10 @@ func Configurar(db *gorm.DB) *gin.Engine {
 			protegido.GET("/entradas/me", entradaController.MisEntradas)
 			protegido.DELETE("/entradas/:id", entradaController.Cancelar)
 			protegido.POST("/entradas/:id/transfer", entradaController.Traspasar)
+
+			protegido.POST("/favoritos/:eventoId", favoritoController.Agregar)
+			protegido.DELETE("/favoritos/:eventoId", favoritoController.Quitar)
+			protegido.GET("/favoritos", favoritoController.Listar)
 		}
 	}
 
