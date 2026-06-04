@@ -15,6 +15,8 @@ type IEntradaDAO interface {
 	CambiarEstado(tx *gorm.DB, entradaID uint, nuevoEstado string) error
 	DevolverCupo(tx *gorm.DB, eventoID uint) error
 	CambiarDueno(tx *gorm.DB, entradaID uint, nuevoUsuarioID uint) error
+	CancelarPorEvento(eventoID uint) error
+	ListarActivasPorEvento(eventoID uint) ([]domain.Entrada, error)
 }
 
 type EntradaDAO struct {
@@ -80,6 +82,18 @@ func (d *EntradaDAO) DevolverCupo(tx *gorm.DB, eventoID uint) error {
 	return tx.Model(&domain.Evento{}).
 		Where("id = ?", eventoID).
 		UpdateColumn("cupo_disponible", gorm.Expr("cupo_disponible + 1")).Error
+}
+
+func (d *EntradaDAO) CancelarPorEvento(eventoID uint) error {
+	return d.db.Model(&domain.Entrada{}).
+		Where("evento_id = ? AND estado = ?", eventoID, "activa").
+		UpdateColumn("estado", "cancelada").Error
+}
+
+func (d *EntradaDAO) ListarActivasPorEvento(eventoID uint) ([]domain.Entrada, error) {
+	var entradas []domain.Entrada
+	err := d.db.Where("evento_id = ? AND estado = ?", eventoID, "activa").Find(&entradas).Error
+	return entradas, err
 }
 
 // CambiarDueno actualiza el usuario_id de la entrada dentro de una transacción.

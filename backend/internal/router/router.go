@@ -24,25 +24,24 @@ func Configurar(db *gorm.DB) *gin.Engine {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	// Auth
+	// DAOs
 	usuarioDAO := dao.NuevoUsuarioDAO(db)
-	authService := services.NuevoAuthService(usuarioDAO)
-	authController := controllers.NuevoAuthController(authService)
-
-	// Eventos
-	eventoDAO := dao.NuevoEventoDAO(db)
-	eventoService := services.NuevoEventoService(eventoDAO)
-	eventoController := controllers.NuevoEventoController(eventoService)
-
-	// Entradas
+	eventoDAO  := dao.NuevoEventoDAO(db)
 	entradaDAO := dao.NuevoEntradaDAO(db)
-	entradaService := services.NuevoEntradaService(entradaDAO, eventoDAO, usuarioDAO, db)
-	entradaController := controllers.NuevoEntradaController(entradaService)
-
-	// Favoritos
 	favoritoDAO := dao.NuevoFavoritoDAO(db)
+
+	// Services
+	authService     := services.NuevoAuthService(usuarioDAO)
+	eventoService   := services.NuevoEventoService(eventoDAO, entradaDAO, usuarioDAO)
+	entradaService  := services.NuevoEntradaService(entradaDAO, eventoDAO, usuarioDAO, db)
 	favoritoService := services.NuevoFavoritoService(favoritoDAO, eventoDAO)
+
+	// Controllers
+	authController     := controllers.NuevoAuthController(authService)
+	eventoController   := controllers.NuevoEventoController(eventoService)
+	entradaController  := controllers.NuevoEntradaController(entradaService)
 	favoritoController := controllers.NuevoFavoritoController(favoritoService)
+	adminController    := controllers.NuevoAdminController(eventoService)
 	
 	api := r.Group("/api/v1")
 	{
@@ -70,6 +69,16 @@ func Configurar(db *gorm.DB) *gin.Engine {
 			protegido.POST("/favoritos/:eventoId", favoritoController.Agregar)
 			protegido.DELETE("/favoritos/:eventoId", favoritoController.Quitar)
 			protegido.GET("/favoritos", favoritoController.Listar)
+
+			// Rutas de administrador — requieren JWT + rol admin
+			admin := protegido.Group("/admin")
+			admin.Use(middleware.AutorizarAdmin())
+			{
+				admin.POST("/eventos", adminController.CrearEvento)
+				admin.PUT("/eventos/:id", adminController.ActualizarEvento)
+				admin.DELETE("/eventos/:id", adminController.CancelarEvento)
+				admin.GET("/eventos/:id/reporte", adminController.ReporteOcupacion)
+			}
 		}
 	}
 

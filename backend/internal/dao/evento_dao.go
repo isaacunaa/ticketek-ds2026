@@ -10,6 +10,9 @@ import (
 type IEventoDAO interface {
 	ListarActivos(categoria, search string) ([]domain.Evento, error)
 	BuscarPorID(id uint) (*domain.Evento, error)
+	Crear(evento *domain.Evento) error
+	Actualizar(evento *domain.Evento) error
+	CambiarEstado(id uint, estado string) error
 }
 
 type EventoDAO struct {
@@ -40,6 +43,20 @@ func (d *EventoDAO) ListarActivos(categoria, search string) ([]domain.Evento, er
 	}
 
 	return eventos, nil
+}
+
+func (d *EventoDAO) Crear(evento *domain.Evento) error {
+	return d.db.Create(evento).Error
+}
+
+func (d *EventoDAO) Actualizar(evento *domain.Evento) error {
+	return d.db.Save(evento).Error
+}
+
+func (d *EventoDAO) CambiarEstado(id uint, estado string) error {
+	return d.db.Model(&domain.Evento{}).
+		Where("id = ?", id).
+		UpdateColumn("estado", estado).Error
 }
 
 // BuscarPorID retorna el evento con ese ID, o nil si no existe.

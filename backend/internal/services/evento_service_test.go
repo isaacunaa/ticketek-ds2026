@@ -18,7 +18,7 @@ func TestListarEventos_Exito(t *testing.T) {
 	}
 	mockDAO.On("ListarActivos", "", "").Return(eventos, nil)
 
-	svc := NuevoEventoService(mockDAO)
+	svc := NuevoEventoService(mockDAO, new(MockEntradaDAO), new(MockUsuarioDAO))
 	resultado, err := svc.ListarEventos("", "")
 
 	assert.NoError(t, err)
@@ -32,7 +32,7 @@ func TestListarEventos_ConFiltros(t *testing.T) {
 	eventos := []domain.Evento{{ID: 1, Titulo: "Rock Fest", Categoria: "musica"}}
 	mockDAO.On("ListarActivos", "musica", "rock").Return(eventos, nil)
 
-	svc := NuevoEventoService(mockDAO)
+	svc := NuevoEventoService(mockDAO, new(MockEntradaDAO), new(MockUsuarioDAO))
 	resultado, err := svc.ListarEventos("musica", "rock")
 
 	assert.NoError(t, err)
@@ -45,7 +45,7 @@ func TestListarEventos_Error(t *testing.T) {
 	mockDAO := new(MockEventoDAO)
 	mockDAO.On("ListarActivos", "", "").Return(nil, errors.New("error de BD"))
 
-	svc := NuevoEventoService(mockDAO)
+	svc := NuevoEventoService(mockDAO, new(MockEntradaDAO), new(MockUsuarioDAO))
 	resultado, err := svc.ListarEventos("", "")
 
 	assert.Error(t, err)
@@ -60,7 +60,7 @@ func TestObtenerEventoPorID_Exito(t *testing.T) {
 	evento := &domain.Evento{ID: 5, Titulo: "Festival", Estado: "activo"}
 	mockDAO.On("BuscarPorID", uint(5)).Return(evento, nil)
 
-	svc := NuevoEventoService(mockDAO)
+	svc := NuevoEventoService(mockDAO, new(MockEntradaDAO), new(MockUsuarioDAO))
 	resultado, err := svc.ObtenerEventoPorID(5)
 
 	assert.NoError(t, err)
@@ -74,7 +74,7 @@ func TestObtenerEventoPorID_NoEncontrado(t *testing.T) {
 	mockDAO := new(MockEventoDAO)
 	mockDAO.On("BuscarPorID", uint(99)).Return(nil, nil)
 
-	svc := NuevoEventoService(mockDAO)
+	svc := NuevoEventoService(mockDAO, new(MockEntradaDAO), new(MockUsuarioDAO))
 	resultado, err := svc.ObtenerEventoPorID(99)
 
 	assert.ErrorIs(t, err, ErrEventoNoEncontrado)
@@ -86,7 +86,7 @@ func TestObtenerEventoPorID_ErrorDAO(t *testing.T) {
 	mockDAO := new(MockEventoDAO)
 	mockDAO.On("BuscarPorID", uint(1)).Return(nil, errors.New("timeout"))
 
-	svc := NuevoEventoService(mockDAO)
+	svc := NuevoEventoService(mockDAO, new(MockEntradaDAO), new(MockUsuarioDAO))
 	resultado, err := svc.ObtenerEventoPorID(1)
 
 	assert.Error(t, err)

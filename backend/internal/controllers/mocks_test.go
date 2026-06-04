@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dtos"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -47,6 +48,35 @@ func (m *MockEventoService) ObtenerEventoPorID(id uint) (*domain.Evento, error) 
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*domain.Evento), args.Error(1)
+}
+
+func (m *MockEventoService) Crear(req dtos.EventoRequest) (*domain.Evento, error) {
+	args := m.Called(req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Evento), args.Error(1)
+}
+
+func (m *MockEventoService) Actualizar(id uint, req dtos.EventoRequest) (*domain.Evento, error) {
+	args := m.Called(id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Evento), args.Error(1)
+}
+
+func (m *MockEventoService) Cancelar(id uint) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+func (m *MockEventoService) ObtenerReporte(eventoID uint) (*dtos.ReporteEvento, error) {
+	args := m.Called(eventoID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*dtos.ReporteEvento), args.Error(1)
 }
 
 // ── MockFavoritoService ───────────────────────────────────────────────────────

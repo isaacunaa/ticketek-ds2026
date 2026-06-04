@@ -11,6 +11,7 @@ type IUsuarioDAO interface {
 	BuscarPorEmail(email string) (*domain.Usuario, error)
 	Crear(usuario *domain.Usuario) error
 	BuscarPorID(id uint) (*domain.Usuario, error)
+	BuscarPorIDs(ids []uint) ([]domain.Usuario, error)
 }
 
 type UsuarioDAO struct {
@@ -37,6 +38,12 @@ func (d *UsuarioDAO) BuscarPorEmail(email string) (*domain.Usuario, error) {
 		return nil, err
 	}
 	return &usuario, nil
+}
+
+func (d *UsuarioDAO) BuscarPorIDs(ids []uint) ([]domain.Usuario, error) {
+	var usuarios []domain.Usuario
+	err := d.db.Where("id IN ?", ids).Find(&usuarios).Error
+	return usuarios, err
 }
 
 // BuscarPorID retorna el usuario con ese ID, o nil si no existe.

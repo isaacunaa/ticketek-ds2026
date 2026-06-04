@@ -35,6 +35,14 @@ func (m *MockUsuarioDAO) BuscarPorID(id uint) (*domain.Usuario, error) {
 	return args.Get(0).(*domain.Usuario), args.Error(1)
 }
 
+func (m *MockUsuarioDAO) BuscarPorIDs(ids []uint) ([]domain.Usuario, error) {
+	args := m.Called(ids)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Usuario), args.Error(1)
+}
+
 // ── MockEventoDAO ─────────────────────────────────────────────────────────────
 
 type MockEventoDAO struct {
@@ -55,6 +63,21 @@ func (m *MockEventoDAO) BuscarPorID(id uint) (*domain.Evento, error) {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*domain.Evento), args.Error(1)
+}
+
+func (m *MockEventoDAO) Crear(evento *domain.Evento) error {
+	args := m.Called(evento)
+	return args.Error(0)
+}
+
+func (m *MockEventoDAO) Actualizar(evento *domain.Evento) error {
+	args := m.Called(evento)
+	return args.Error(0)
+}
+
+func (m *MockEventoDAO) CambiarEstado(id uint, estado string) error {
+	args := m.Called(id, estado)
+	return args.Error(0)
 }
 
 // ── MockEntradaDAO ────────────────────────────────────────────────────────────
@@ -102,6 +125,19 @@ func (m *MockEntradaDAO) DevolverCupo(tx *gorm.DB, eventoID uint) error {
 func (m *MockEntradaDAO) CambiarDueno(tx *gorm.DB, entradaID uint, nuevoUsuarioID uint) error {
 	args := m.Called(tx, entradaID, nuevoUsuarioID)
 	return args.Error(0)
+}
+
+func (m *MockEntradaDAO) CancelarPorEvento(eventoID uint) error {
+	args := m.Called(eventoID)
+	return args.Error(0)
+}
+
+func (m *MockEntradaDAO) ListarActivasPorEvento(eventoID uint) ([]domain.Entrada, error) {
+	args := m.Called(eventoID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Entrada), args.Error(1)
 }
 
 // ── MockFavoritoDAO ───────────────────────────────────────────────────────────
