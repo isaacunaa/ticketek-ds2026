@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func GenerarToken(usuarioID uint, email, rol string) (string, error) {
