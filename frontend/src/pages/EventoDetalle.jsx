@@ -32,7 +32,7 @@ export default function EventoDetalle() {
       setError('')
       try {
         const { data } = await client.get(`/eventos/${id}`)
-        setEvento(data)
+        setEvento(data.evento ?? data)
       } catch (err) {
         setError(
           err.response?.status === 404
@@ -85,14 +85,14 @@ export default function EventoDetalle() {
   const nombre = evento.nombre || evento.titulo || 'Sin nombre'
   const emoji  = getEmoji(evento.categoria)
 
-  const fechaFmt = evento.fecha
-    ? new Date(evento.fecha).toLocaleDateString('es-AR', {
+  const fechaFmt = evento.fecha_hora
+    ? new Date(evento.fecha_hora).toLocaleDateString('es-AR', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
       })
     : null
 
-  const horaFmt = evento.fecha
-    ? new Date(evento.fecha).toLocaleTimeString('es-AR', {
+  const horaFmt = evento.fecha_hora
+    ? new Date(evento.fecha_hora).toLocaleTimeString('es-AR', {
         hour: '2-digit', minute: '2-digit',
       })
     : null
@@ -127,24 +127,16 @@ export default function EventoDetalle() {
                     <span>{fechaFmt}{horaFmt ? ` · ${horaFmt} hs` : ''}</span>
                   </div>
                 )}
-                {evento.lugar && (
+                {evento.ubicacion && (
                   <div className="detalle-meta-item">
                     <span>📍</span>
-                    <span>{evento.lugar}</span>
+                    <span>{evento.ubicacion}</span>
                   </div>
                 )}
-                {precioLabel && (
-                  <div className="detalle-meta-item">
-                    <span>💰</span>
-                    <span style={{ fontWeight: 700, color: 'var(--accent-dark)' }}>
-                      {precioLabel}
-                    </span>
-                  </div>
-                )}
-                {evento.capacidad != null && (
+                {evento.cupo_disponible != null && (
                   <div className="detalle-meta-item">
                     <span>👥</span>
-                    <span>Capacidad: {evento.capacidad} personas</span>
+                    <span>Lugares disponibles: {evento.cupo_disponible}</span>
                   </div>
                 )}
               </div>
@@ -203,27 +195,6 @@ export default function EventoDetalle() {
               )
             )}
 
-            {/* Info extra en sidebar */}
-            <div className="sidebar-info">
-              {evento.lugar && (
-                <div className="sidebar-info-row">
-                  <span>📍</span>
-                  <span>{evento.lugar}</span>
-                </div>
-              )}
-              {fechaFmt && (
-                <div className="sidebar-info-row">
-                  <span>📅</span>
-                  <span>{fechaFmt}</span>
-                </div>
-              )}
-              {evento.categoria && (
-                <div className="sidebar-info-row">
-                  <span>🏷️</span>
-                  <span>{evento.categoria}</span>
-                </div>
-              )}
-            </div>
           </aside>
         </div>
       </div>

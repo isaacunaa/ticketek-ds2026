@@ -948,12 +948,16 @@ input, textarea { font-family: var(--font); }
 }
 
 .footer-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 3rem;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 5rem;
   margin-bottom: 2.5rem;
+}
+
+.footer-cols {
+  display: flex;
+  gap: 4rem;
 }
 
 .footer-brand-name {
@@ -998,8 +1002,6 @@ input, textarea { font-family: var(--font); }
 .footer-bottom {
   border-top: 1px solid #4a5568;
   padding-top: 1.5rem;
-  max-width: 1100px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1016,7 +1018,8 @@ input, textarea { font-family: var(--font); }
   .events-grid { grid-template-columns: repeat(2, 1fr); }
   .detalle-grid { grid-template-columns: 1fr; }
   .detalle-sidebar { position: static; }
-  .footer-inner { grid-template-columns: 1fr 1fr; }
+  .footer-inner { flex-direction: column; gap: 2rem; }
+  .footer-cols { gap: 2rem; }
 }
 
 @media (max-width: 640px) {

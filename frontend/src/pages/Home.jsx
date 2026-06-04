@@ -4,17 +4,26 @@ import client from '../api/client'
 
 /* ── Mapeo categoría → emoji ─────────────────────────────── */
 const EMOJI = {
-  'Música':     '🎵',
-  'Humor':      '😂',
-  'Teatro':     '🎭',
-  'Deportes':   '⚽',
-  'Arte':       '🎨',
-  'Cine':       '🎬',
-  'Tecnología': '💻',
+  'música':      '🎵',
+  'humor':       '😂',
+  'teatro':      '🎭',
+  'deportes':    '⚽',
+  'arte':        '🎨',
+  'cine':        '🎬',
+  'tecnología':  '💻',
+  'espectáculo': '🎪',
 }
-const getEmoji = (cat) => EMOJI[cat] ?? '🎉'
+const getEmoji = (cat) => EMOJI[cat?.toLowerCase()] ?? '🎉'
 
-const CATEGORIAS = ['Todos', 'Música', 'Humor', 'Teatro', 'Deportes', 'Arte']
+const CATEGORIAS = [
+  { label: 'Todos',        value: 'Todos' },
+  { label: 'Música',       value: 'música' },
+  { label: 'Humor',        value: 'humor' },
+  { label: 'Teatro',       value: 'teatro' },
+  { label: 'Deportes',     value: 'deportes' },
+  { label: 'Arte',         value: 'arte' },
+  { label: 'Espectáculo',  value: 'espectáculo' },
+]
 
 /* ── EventCard ───────────────────────────────────────────── */
 function EventCard({ evento }) {
@@ -62,7 +71,7 @@ function EventCard({ evento }) {
 export default function Home() {
   const [eventos,   setEventos]   = useState([])
   const [search,    setSearch]    = useState('')
-  const [categoria, setCategoria] = useState('Todos')
+  const [categoria, setCategoria] = useState(CATEGORIAS[0])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState('')
 
@@ -74,8 +83,8 @@ export default function Home() {
     setError('')
     try {
       const params = {}
-      if (search.trim())        params.search    = search.trim()
-      if (categoria !== 'Todos') params.categoria = categoria
+      if (search.trim())               params.search    = search.trim()
+      if (categoria.value !== 'Todos') params.categoria = categoria.value
 
       const { data } = await client.get('/eventos', { params })
       const lista = Array.isArray(data)
@@ -91,7 +100,7 @@ export default function Home() {
   }, [search, categoria])
 
   // Fetch en montaje y cuando cambia la categoría (inmediato)
-  useEffect(() => { fetchEventos() }, [categoria]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchEventos() }, [categoria.value]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounce del buscador (400 ms)
   useEffect(() => {
@@ -101,7 +110,7 @@ export default function Home() {
 
   const handleClearFilters = () => {
     setSearch('')
-    setCategoria('Todos')
+    setCategoria(CATEGORIAS[0])
     if (inputRef.current) inputRef.current.value = ''
   }
 
@@ -110,7 +119,7 @@ export default function Home() {
       {/* ── Hero ─────────────────────────────────────────── */}
       <section className="hero">
         <h1 className="hero-title">Encontrá tu próximo evento</h1>
-        <p className="hero-subtitle">Música, teatro, deporte y mucho más</p>
+        <p className="hero-subtitle">Eventos que atrapan</p>
 
         <div className="hero-search">
           <input
@@ -129,11 +138,11 @@ export default function Home() {
       <div className="category-bar">
         {CATEGORIAS.map((cat) => (
           <button
-            key={cat}
-            className={`category-tab${categoria === cat ? ' active' : ''}`}
+            key={cat.value}
+            className={`category-tab${categoria.value === cat.value ? ' active' : ''}`}
             onClick={() => setCategoria(cat)}
           >
-            {cat}
+            {cat.label}
           </button>
         ))}
       </div>
