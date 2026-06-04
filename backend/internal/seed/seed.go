@@ -28,7 +28,7 @@ func seedUsuarios(db *gorm.DB) {
 		apellido string
 		rol      string
 	}{
-		{"admin@ticketek.com", "admin123", "Admin", "Ticketek", "admin"},
+		{"admin@vortice.com", "admin123", "Admin", "Vórtice", "admin"},
 		{"juan@mail.com", "123456", "Juan", "Pérez", "cliente"},
 		{"maria@mail.com", "123456", "María", "González", "cliente"},
 	}

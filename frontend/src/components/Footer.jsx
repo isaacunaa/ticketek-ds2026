@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="footer-inner">
         {/* Marca */}
         <div>
-          <p className="footer-brand-name">Ticketek</p>
+          <p className="footer-brand-name">Vórtice</p>
           <p className="footer-brand-desc">
             Tu plataforma de tickets para eventos de música, teatro, deportes y más.
           </p>
@@ -37,7 +37,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <span>© {year} Ticketek. Todos los derechos reservados.</span>
+        <span>© {year} Vórtice. Todos los derechos reservados.</span>
         <span>Trabajo final — Desarrollo de Software {year}</span>
       </div>
     </footer>

@@ -38,7 +38,7 @@ export default function Register() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <p className="auth-logo">Ticketek</p>
+        <p className="auth-logo">Vórtice</p>
         <h1 className="auth-heading">Crear cuenta</h1>
         <p className="auth-subheading">Es gratis y toma menos de un minuto</p>
 

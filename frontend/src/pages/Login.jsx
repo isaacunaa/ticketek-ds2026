@@ -37,7 +37,7 @@ export default function Login() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <p className="auth-logo">Ticketek</p>
+        <p className="auth-logo">Vórtice</p>
         <h1 className="auth-heading">Iniciar sesión</h1>
         <p className="auth-subheading">Ingresá a tu cuenta para comprar entradas</p>
 

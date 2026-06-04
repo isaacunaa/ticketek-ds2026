@@ -13,7 +13,7 @@ export default function Header() {
 
   return (
     <header className="header">
-      <Link to="/" className="header-logo">Ticketek</Link>
+      <Link to="/" className="header-logo">Vórtice</Link>
 
       <nav className="header-nav">
         <Link to="/" className="header-nav-link">Eventos</Link>
