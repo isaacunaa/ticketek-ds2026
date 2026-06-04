@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dao"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/utils"
 )
@@ -12,11 +13,16 @@ var (
 	ErrCredencialesInvalidas = errors.New("credenciales inválidas")
 )
 
-type AuthService struct {
-	usuarioDAO IUsuarioDAO
+type IAuthService interface {
+	Registrar(email, password, nombre, apellido string) (*domain.Usuario, string, error)
+	Login(email, password string) (*domain.Usuario, string, error)
 }
 
-func NuevoAuthService(usuarioDAO IUsuarioDAO) *AuthService {
+type AuthService struct {
+	usuarioDAO dao.IUsuarioDAO
+}
+
+func NuevoAuthService(usuarioDAO dao.IUsuarioDAO) *AuthService {
 	return &AuthService{usuarioDAO: usuarioDAO}
 }
 

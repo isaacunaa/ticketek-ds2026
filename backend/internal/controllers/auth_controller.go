@@ -5,34 +5,21 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dtos"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/services"
 )
 
 type AuthController struct {
-	authService IAuthService
+	authService services.IAuthService
 }
 
-func NuevoAuthController(authService IAuthService) *AuthController {
+func NuevoAuthController(authService services.IAuthService) *AuthController {
 	return &AuthController{authService: authService}
-}
-
-// RegistrarRequest es el body esperado en POST /auth/register.
-type RegistrarRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-	Nombre   string `json:"nombre" binding:"required"`
-	Apellido string `json:"apellido" binding:"required"`
-}
-
-// LoginRequest es el body esperado en POST /auth/login.
-type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
 }
 
 // Registrar maneja POST /auth/register.
 func (c *AuthController) Registrar(ctx *gin.Context) {
-	var req RegistrarRequest
+	var req dtos.RegistrarRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -56,7 +43,7 @@ func (c *AuthController) Registrar(ctx *gin.Context) {
 
 // Login maneja POST /auth/login.
 func (c *AuthController) Login(ctx *gin.Context) {
-	var req LoginRequest
+	var req dtos.LoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

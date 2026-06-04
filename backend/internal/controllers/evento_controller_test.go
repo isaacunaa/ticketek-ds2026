@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func routerEvento(svc IEventoService) *gin.Engine {
+func routerEvento(svc services.IEventoService) *gin.Engine {
 	r := gin.New()
 	ctrl := NuevoEventoController(svc)
 	r.GET("/eventos", ctrl.Listar)

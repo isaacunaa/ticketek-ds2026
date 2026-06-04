@@ -7,6 +7,16 @@ import (
 	"gorm.io/gorm"
 )
 
+type IEntradaDAO interface {
+	Crear(tx *gorm.DB, entrada *domain.Entrada) error
+	DescontarCupo(tx *gorm.DB, eventoID uint) error
+	ListarPorUsuario(usuarioID uint) ([]domain.Entrada, error)
+	BuscarPorID(id uint) (*domain.Entrada, error)
+	CambiarEstado(tx *gorm.DB, entradaID uint, nuevoEstado string) error
+	DevolverCupo(tx *gorm.DB, eventoID uint) error
+	CambiarDueno(tx *gorm.DB, entradaID uint, nuevoUsuarioID uint) error
+}
+
 type EntradaDAO struct {
 	db *gorm.DB
 }

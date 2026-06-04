@@ -3,6 +3,7 @@ package services
 import (
 	"testing"
 
+	"github.com/isaacunaa/ticketek-ds2026/backend/internal/dao"
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -10,7 +11,7 @@ import (
 )
 
 // helper: crea EntradaService con MockTransactor — evita repetir el wiring en cada test.
-func nuevoEntradaServiceTest(entradaDAO IEntradaDAO, eventoDAO IEventoDAO, usuarioDAO IUsuarioDAO) *EntradaService {
+func nuevoEntradaServiceTest(entradaDAO dao.IEntradaDAO, eventoDAO dao.IEventoDAO, usuarioDAO dao.IUsuarioDAO) *EntradaService {
 	return NuevoEntradaService(entradaDAO, eventoDAO, usuarioDAO, &MockTransactor{})
 }
 

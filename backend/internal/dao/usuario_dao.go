@@ -7,6 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
+type IUsuarioDAO interface {
+	BuscarPorEmail(email string) (*domain.Usuario, error)
+	Crear(usuario *domain.Usuario) error
+	BuscarPorID(id uint) (*domain.Usuario, error)
+}
+
 type UsuarioDAO struct {
 	db *gorm.DB
 }
