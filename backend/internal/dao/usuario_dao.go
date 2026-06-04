@@ -2,6 +2,7 @@ package dao
 
 import (
 	"errors"
+	"time"
 
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"gorm.io/gorm"
@@ -12,6 +13,7 @@ type IUsuarioDAO interface {
 	Crear(usuario *domain.Usuario) error
 	BuscarPorID(id uint) (*domain.Usuario, error)
 	BuscarPorIDs(ids []uint) ([]domain.Usuario, error)
+	ActualizarSuscripcion(usuarioID uint, activa bool, vence *time.Time) error
 }
 
 type UsuarioDAO struct {
@@ -57,4 +59,14 @@ func (d *UsuarioDAO) BuscarPorID(id uint) (*domain.Usuario, error) {
 		return nil, err
 	}
 	return &usuario, nil
+}
+
+// ActualizarSuscripcion actualiza el estado de suscripción del usuario.
+func (d *UsuarioDAO) ActualizarSuscripcion(usuarioID uint, activa bool, vence *time.Time) error {
+	return d.db.Model(&domain.Usuario{}).
+		Where("id = ?", usuarioID).
+		Updates(map[string]interface{}{
+			"suscripcion_activa": activa,
+			"suscripcion_vence":  vence,
+		}).Error
 }

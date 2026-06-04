@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/isaacunaa/ticketek-ds2026/backend/internal/domain"
 	"github.com/stretchr/testify/mock"
@@ -41,6 +42,11 @@ func (m *MockUsuarioDAO) BuscarPorIDs(ids []uint) ([]domain.Usuario, error) {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]domain.Usuario), args.Error(1)
+}
+
+func (m *MockUsuarioDAO) ActualizarSuscripcion(usuarioID uint, activa bool, vence *time.Time) error {
+	args := m.Called(usuarioID, activa, vence)
+	return args.Error(0)
 }
 
 // ── MockEventoDAO ─────────────────────────────────────────────────────────────
@@ -139,6 +145,7 @@ func (m *MockEntradaDAO) ListarActivasPorEvento(eventoID uint) ([]domain.Entrada
 	}
 	return args.Get(0).([]domain.Entrada), args.Error(1)
 }
+
 
 // ── MockFavoritoDAO ───────────────────────────────────────────────────────────
 

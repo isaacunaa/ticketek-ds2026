@@ -109,12 +109,12 @@ type MockEntradaService struct {
 	mock.Mock
 }
 
-func (m *MockEntradaService) Comprar(usuarioID, eventoID uint) (*domain.Entrada, error) {
-	args := m.Called(usuarioID, eventoID)
+func (m *MockEntradaService) Comprar(usuarioID, eventoID uint, cantidad int) ([]domain.Entrada, error) {
+	args := m.Called(usuarioID, eventoID, cantidad)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.Entrada), args.Error(1)
+	return args.Get(0).([]domain.Entrada), args.Error(1)
 }
 
 func (m *MockEntradaService) ListarPorUsuario(usuarioID uint) ([]domain.Entrada, error) {
@@ -137,3 +137,4 @@ func (m *MockEntradaService) Traspasar(usuarioID, entradaID uint, emailDestinata
 	}
 	return args.Get(0).(*domain.Entrada), args.Error(1)
 }
+

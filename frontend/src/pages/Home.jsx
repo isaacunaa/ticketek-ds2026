@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import client from '../api/client'
 
-/* ── Mapeo categoría → emoji ─────────────────────────────── */
+const token = () => localStorage.getItem('token')
+
 const EMOJI = {
   'música':      '🎵',
   'humor':       '😂',
@@ -30,16 +31,78 @@ const CATEGORIAS = [
   { label: 'Espectáculo',  value: 'espectáculo' },
 ]
 
+/* ── Club Vórtice Banner ─────────────────────────────────── */
+function ClubVortice({ suscripcion, onSuscribir, suscribiendo, onCancelar, cancelando }) {
+  if (!token()) return null
+
+  const activa = suscripcion?.activa
+  const vence  = suscripcion?.vence
+    ? new Date(suscripcion.vence).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null
+
+  if (activa) {
+    return (
+      <div className="club-banner club-banner-activo">
+        <div className="club-banner-inner">
+          <div className="club-banner-info">
+            <div className="club-activo-header">
+              <span className="club-activo-check">✓</span>
+              <span className="club-activo-titulo">Sos miembro del Club Vórtice</span>
+            </div>
+            <p className="club-activo-detalle">
+              Tu descuento del <strong>10%</strong> está activo en todas las entradas
+              {vence && <> · Membresía válida hasta el <strong>{vence}</strong></>}
+            </p>
+          </div>
+          <div className="club-activo-acciones">
+            <button className="club-btn club-btn-renovar" onClick={onSuscribir} disabled={suscribiendo || cancelando}>
+              {suscribiendo ? 'Procesando...' : '↺ Renovar'}
+            </button>
+            <button className="club-btn-cancelar" onClick={onCancelar} disabled={cancelando || suscribiendo}>
+              {cancelando ? 'Cancelando...' : 'Cancelar membresía'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="club-banner">
+      <div className="club-banner-inner">
+        <div className="club-banner-info">
+          <div className="club-promo-header">
+            <span className="club-badge">💜 Club Vórtice</span>
+            <span className="club-promo-precio">$5.000 / mes</span>
+          </div>
+          <p className="club-desc">
+            Unite al club y conseguí un <strong>10% de descuento</strong> en <strong>todas las entradas</strong> del catálogo.
+          </p>
+          <div className="club-beneficios">
+            <span>✓ Descuento inmediato</span>
+            <span>✓ Sin renovación automática</span>
+            <span>✓ Cancelable cuando quieras</span>
+          </div>
+        </div>
+        <button className="club-btn" onClick={onSuscribir} disabled={suscribiendo}>
+          {suscribiendo ? 'Procesando...' : 'Suscribirme — $5.000/mes'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 /* ── EventCard ───────────────────────────────────────────── */
-function EventCard({ evento }) {
+function EventCard({ evento, esFavorito, onToggleFavorito, suscripcionActiva }) {
   const nombre = evento.nombre || evento.titulo || 'Sin nombre'
   const emoji  = getEmoji(evento.categoria)
 
-  const fecha = evento.fecha
-    ? new Date(evento.fecha).toLocaleDateString('es-AR', {
-        day: 'numeric', month: 'short', year: 'numeric',
-      })
+  const fecha = evento.fecha_hora
+    ? new Date(evento.fecha_hora).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
     : null
+
+  const hayDescuento = suscripcionActiva && evento.precio > 0
+  const precioDesc   = hayDescuento ? Math.round(evento.precio * 0.9 * 100) / 100 : null
 
   const precioLabel =
     evento.precio == null ? null :
@@ -47,32 +110,51 @@ function EventCard({ evento }) {
     `$${Number(evento.precio).toLocaleString('es-AR')}`
 
   return (
-    <Link to={`/eventos/${evento.id}`} className="event-card">
-      {/* Placeholder de imagen */}
-      <div className="event-placeholder">{emoji}</div>
+    <div className="event-card-wrap">
+      <Link to={`/eventos/${evento.id}`} className="event-card">
+        <div className="event-placeholder">{emoji}</div>
 
-      <div className="event-body">
-        {evento.categoria && (
-          <div className="event-badges">
-            {evento.categoria.split(',').map(c => c.trim()).map(c => (
-              <span key={c} className="event-category-badge">{c}</span>
-            ))}
-          </div>
-        )}
-        <h3 className="event-title">{nombre}</h3>
-        {evento.lugar && <p className="event-venue">📍 {evento.lugar}</p>}
-        {fecha         && <p className="event-date">📅 {fecha}</p>}
-        {precioLabel   && (
-          <p style={{ fontWeight: 700, color: 'var(--accent-dark)', fontSize: '.92rem', marginTop: '.2rem' }}>
-            {precioLabel}
-          </p>
-        )}
-      </div>
+        <div className="event-body">
+          {evento.categoria && (
+            <div className="event-badges">
+              {evento.categoria.split(',').map(c => c.trim()).map(c => (
+                <span key={c} className="event-category-badge">{c}</span>
+              ))}
+            </div>
+          )}
+          <h3 className="event-title">{nombre}</h3>
+          {evento.ubicacion && <p className="event-venue">📍 {evento.ubicacion}</p>}
+          {fecha             && <p className="event-date">📅 {fecha}</p>}
+          {precioLabel && (
+            <div style={{ marginTop: '.3rem' }}>
+              {hayDescuento ? (
+                <div className="precio-descuento-wrap">
+                  <span className="precio-tachado">{precioLabel}</span>
+                  <span className="precio-nuevo">${Number(precioDesc).toLocaleString('es-AR')}</span>
+                  <span className="badge-descuento">10% OFF</span>
+                </div>
+              ) : (
+                <p style={{ fontWeight: 700, color: 'var(--accent-dark)', fontSize: '.92rem' }}>{precioLabel}</p>
+              )}
+            </div>
+          )}
+        </div>
 
-      <div className="event-footer">
-        <span className="btn-buy">Comprar entradas</span>
-      </div>
-    </Link>
+        <div className="event-footer">
+          <span className="btn-buy">Ver más</span>
+        </div>
+      </Link>
+
+      {token() && (
+        <button
+          className={`heart-btn${esFavorito ? ' heart-active' : ''}`}
+          onClick={() => onToggleFavorito?.(evento.id)}
+          title={esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+        >
+          {esFavorito ? '♥' : '♡'}
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -84,8 +166,61 @@ export default function Home() {
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState('')
 
-  // Ref para el input del hero
+  const [favoritoIds,   setFavoritoIds]   = useState(new Set())
+  const [suscripcion,   setSuscripcion]   = useState(null)
+  const [suscribiendo,  setSuscribiendo]  = useState(false)
+  const [cancelando,    setCancelando]    = useState(false)
+  const [clubFeedback,  setClubFeedback]  = useState('')
+
   const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (!token()) return
+    client.get('/favoritos')
+      .then(({ data }) => setFavoritoIds(new Set((data.favoritos ?? []).map(fav => fav.evento_id))))
+      .catch(() => {})
+    client.get('/club/estado')
+      .then(({ data }) => setSuscripcion(data))
+      .catch(() => {})
+  }, [])
+
+  const toggleFavorito = async (eventoId) => {
+    if (!token()) return
+    try {
+      if (favoritoIds.has(eventoId)) {
+        await client.delete(`/favoritos/${eventoId}`)
+        setFavoritoIds(prev => { const n = new Set(prev); n.delete(eventoId); return n })
+      } else {
+        await client.post(`/favoritos/${eventoId}`)
+        setFavoritoIds(prev => new Set([...prev, eventoId]))
+      }
+    } catch { /* ignore */ }
+  }
+
+  const handleSuscribir = async () => {
+    setSuscribiendo(true)
+    setClubFeedback('')
+    try {
+      const { data } = await client.post('/club/suscribir')
+      // Re-consultar el estado real desde el servidor para asegurar consistencia
+      const { data: estado } = await client.get('/club/estado')
+      setSuscripcion(estado)
+      setClubFeedback(data.mensaje || '¡Suscripción activada! Ahora tenés 10% de descuento en todas las entradas.')
+      setTimeout(() => setClubFeedback(''), 5000)
+    } catch (err) {
+      const status = err.response?.status
+      const msg =
+        err.response?.data?.error ||
+        (status === 404 ? 'Reiniciá el backend para activar el Club Vórtice.' :
+         status === 401 ? 'Sesión expirada, iniciá sesión nuevamente.' :
+         status >= 500  ? 'Error en el servidor. Verificá que el backend esté actualizado.' :
+         !err.response  ? 'No se pudo conectar con el servidor.' :
+                          'No se pudo procesar la suscripción.')
+      setClubFeedback('❌ ' + msg)
+    } finally {
+      setSuscribiendo(false)
+    }
+  }
 
   const fetchEventos = useCallback(async (searchVal, catVal) => {
     setLoading(true)
@@ -95,9 +230,7 @@ export default function Home() {
       if (searchVal.trim()) params.search = searchVal.trim()
 
       const { data } = await client.get('/eventos', { params })
-      let lista = Array.isArray(data)
-        ? data
-        : data.eventos ?? data.data ?? []
+      let lista = Array.isArray(data) ? data : data.eventos ?? data.data ?? []
 
       if (catVal !== 'Todos') {
         lista = lista.filter(ev => {
@@ -115,16 +248,30 @@ export default function Home() {
     }
   }, [])
 
-  // Fetch cuando cambia la categoría (inmediato)
   useEffect(() => {
     fetchEventos(search, categoria.value)
   }, [categoria.value]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Debounce del buscador (400 ms)
   useEffect(() => {
     const t = setTimeout(() => { fetchEventos(search, categoria.value) }, 400)
     return () => clearTimeout(t)
   }, [search]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleCancelarSuscripcion = async () => {
+    if (!window.confirm('¿Cancelar tu membresía del Club Vórtice? Perderás el descuento del 10%.')) return
+    setCancelando(true)
+    try {
+      const { data } = await client.delete('/club/suscripcion')
+      const { data: estado } = await client.get('/club/estado')
+      setSuscripcion(estado)
+      setClubFeedback(data.mensaje || 'Membresía cancelada.')
+      setTimeout(() => setClubFeedback(''), 5000)
+    } catch {
+      setClubFeedback('❌ No se pudo cancelar la membresía.')
+    } finally {
+      setCancelando(false)
+    }
+  }
 
   const handleClearFilters = () => {
     setSearch('')
@@ -152,6 +299,22 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Club Vórtice ─────────────────────────────────── */}
+      <ClubVortice
+        suscripcion={suscripcion}
+        onSuscribir={handleSuscribir}
+        suscribiendo={suscribiendo}
+        onCancelar={handleCancelarSuscripcion}
+        cancelando={cancelando}
+      />
+
+      {clubFeedback && (
+        <div className={`club-feedback${clubFeedback.startsWith('❌') ? ' club-feedback-error' : ''}`}>
+          {clubFeedback}
+          <button onClick={() => setClubFeedback('')} style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: '.5rem', opacity: .7 }}>✕</button>
+        </div>
+      )}
+
       {/* ── Barra de categorías ───────────────────────────── */}
       <div className="category-bar">
         {CATEGORIAS.map((cat) => (
@@ -167,7 +330,6 @@ export default function Home() {
 
       {/* ── Grilla de eventos ─────────────────────────────── */}
       <section className="events-section">
-        {/* Estados */}
         {loading && (
           <div className="state-box">
             <span className="spinner" />
@@ -185,9 +347,7 @@ export default function Home() {
         {!loading && !error && eventos.length === 0 && (
           <div className="state-box">
             <p>🎭 No se encontraron eventos con esos filtros.</p>
-            <button className="btn-retry" onClick={handleClearFilters}>
-              Limpiar filtros
-            </button>
+            <button className="btn-retry" onClick={handleClearFilters}>Limpiar filtros</button>
           </div>
         )}
 
@@ -198,7 +358,13 @@ export default function Home() {
             </p>
             <div className="events-grid">
               {eventos.map((ev) => (
-                <EventCard key={ev.id} evento={ev} />
+                <EventCard
+                  key={ev.id}
+                  evento={ev}
+                  esFavorito={favoritoIds.has(ev.id)}
+                  onToggleFavorito={toggleFavorito}
+                  suscripcionActiva={suscripcion?.activa}
+                />
               ))}
             </div>
           </>

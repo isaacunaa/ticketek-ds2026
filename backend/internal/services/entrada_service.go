@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"errors"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,7 +26,7 @@ type ITransactor interface {
 }
 
 type IEntradaService interface {
-	Comprar(usuarioID, eventoID uint) (*domain.Entrada, error)
+	Comprar(usuarioID, eventoID uint, cantidad int) ([]domain.Entrada, error)
 	ListarPorUsuario(usuarioID uint) ([]domain.Entrada, error)
 	Cancelar(usuarioID, entradaID uint) error
 	Traspasar(usuarioID, entradaID uint, emailDestinatario string) (*domain.Entrada, error)
@@ -47,7 +48,14 @@ func NuevoEntradaService(entradaDAO dao.IEntradaDAO, eventoDAO dao.IEventoDAO, u
 	}
 }
 
-func (s *EntradaService) Comprar(usuarioID, eventoID uint) (*domain.Entrada, error) {
+func (s *EntradaService) Comprar(usuarioID, eventoID uint, cantidad int) ([]domain.Entrada, error) {
+	if cantidad < 1 {
+		cantidad = 1
+	}
+	if cantidad > 10 {
+		cantidad = 10
+	}
+
 	evento, err := s.eventoDAO.BuscarPorID(eventoID)
 	if err != nil {
 		return nil, err
@@ -56,33 +64,47 @@ func (s *EntradaService) Comprar(usuarioID, eventoID uint) (*domain.Entrada, err
 		return nil, ErrEventoNoDisponible
 	}
 
-	var entrada *domain.Entrada
+	// Aplicar descuento Club Vórtice si el usuario tiene suscripción activa
+	precioPagado := evento.Precio
+	if usuario, _ := s.usuarioDAO.BuscarPorID(usuarioID); usuario != nil {
+		if usuario.SuscripcionActiva && usuario.SuscripcionVence != nil && time.Now().Before(*usuario.SuscripcionVence) {
+			precioPagado = math.Round(evento.Precio*0.9*100) / 100
+		}
+	}
+
+	var entradas []domain.Entrada
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
-		if err := s.entradaDAO.DescontarCupo(tx, eventoID); err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return ErrSinCupo
+		for i := 0; i < cantidad; i++ {
+			if err := s.entradaDAO.DescontarCupo(tx, eventoID); err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return ErrSinCupo
+				}
+				return err
 			}
-			return err
-		}
 
-		entrada = &domain.Entrada{
-			EventoID:     eventoID,
-			UsuarioID:    usuarioID,
-			Codigo:       uuid.New().String(),
-			Estado:       "activa",
-			PrecioPagado: evento.Precio,
-			FechaCompra:  time.Now(),
-		}
+			entrada := domain.Entrada{
+				EventoID:     eventoID,
+				UsuarioID:    usuarioID,
+				Codigo:       uuid.New().String(),
+				Estado:       "activa",
+				PrecioPagado: precioPagado,
+				FechaCompra:  time.Now(),
+			}
 
-		return s.entradaDAO.Crear(tx, entrada)
+			if err := s.entradaDAO.Crear(tx, &entrada); err != nil {
+				return err
+			}
+			entradas = append(entradas, entrada)
+		}
+		return nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return entrada, nil
+	return entradas, nil
 }
 
 func (s *EntradaService) ListarPorUsuario(usuarioID uint) ([]domain.Entrada, error) {

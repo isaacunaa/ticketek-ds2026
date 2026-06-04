@@ -26,10 +26,17 @@ func (c *EntradaController) Comprar(ctx *gin.Context) {
 		return
 	}
 
-	// Leer usuario_id del contexto (lo puso el middleware JWT)
+	if req.Cantidad < 1 {
+		req.Cantidad = 1
+	}
+	if req.Cantidad > 10 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "el máximo de entradas por compra es 10"})
+		return
+	}
+
 	usuarioID := ctx.GetUint("usuario_id")
 
-	entrada, err := c.entradaService.Comprar(usuarioID, req.EventoID)
+	entradas, err := c.entradaService.Comprar(usuarioID, req.EventoID, req.Cantidad)
 	if err != nil {
 		if errors.Is(err, services.ErrEventoNoDisponible) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -43,7 +50,7 @@ func (c *EntradaController) Comprar(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"entrada": entrada})
+	ctx.JSON(http.StatusCreated, gin.H{"entradas": entradas, "cantidad": len(entradas)})
 }
 
 // MisEntradas maneja GET /api/v1/entradas/me

@@ -24,11 +24,10 @@ export default function Login() {
       localStorage.setItem('usuario', JSON.stringify(data.usuario))
       navigate('/')
     } catch (err) {
-      setError(
-        err.response?.data?.error   ||
-        err.response?.data?.message ||
-        'Credenciales incorrectas.'
-      )
+      const raw = err.response?.data?.error || err.response?.data?.message || ''
+      // Ocultar errores técnicos del validador de Go (ej: "Key: 'LoginRequest.Email'...")
+      const esErrorTecnico = raw.startsWith('Key:') || raw.includes("Error:Field")
+      setError(esErrorTecnico ? 'Email o contraseña incorrectos.' : raw || 'Email o contraseña incorrectos.')
     } finally {
       setLoading(false)
     }

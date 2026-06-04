@@ -6,21 +6,18 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer-inner">
-        {/* Marca */}
         <div>
           <p className="footer-brand-name">Vórtice</p>
-          <p className="footer-brand-desc">
-            Eventos que atrapan.
-          </p>
+          <p className="footer-brand-desc">Eventos que atrapan.</p>
         </div>
 
-        {/* Columnas de links agrupadas */}
         <div className="footer-cols">
           <div>
             <p className="footer-col-title">Navegación</p>
             <ul className="footer-links">
               <li><Link to="/">Eventos</Link></li>
               <li><Link to="/mis-entradas">Mis entradas</Link></li>
+              <li><Link to="/mis-favoritos">Mis favoritos</Link></li>
               <li><Link to="/register">Crear cuenta</Link></li>
               <li><Link to="/login">Iniciar sesión</Link></li>
             </ul>
@@ -29,9 +26,9 @@ export default function Footer() {
           <div>
             <p className="footer-col-title">Legal</p>
             <ul className="footer-links">
-              <li><a href="#">Términos y condiciones</a></li>
-              <li><a href="#">Política de privacidad</a></li>
-              <li><a href="#">Política de reembolso</a></li>
+              <li><Link to="/terminos">Términos y condiciones</Link></li>
+              <li><Link to="/privacidad">Política de privacidad</Link></li>
+              <li><Link to="/reembolsos">Política de reembolso</Link></li>
             </ul>
           </div>
         </div>

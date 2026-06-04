@@ -27,7 +27,11 @@ export default function Header() {
       {/* Nav desktop */}
       <nav className="header-nav">
         <Link to="/" className="header-nav-link">Eventos</Link>
-        <Link to="/mis-entradas" className="header-nav-link">Mis entradas</Link>
+        {token && <Link to="/mis-entradas" className="header-nav-link">Mis entradas</Link>}
+        {token && <Link to="/mis-favoritos" className="header-nav-link">Mis favoritos</Link>}
+        {token && usuario?.rol === 'admin' && (
+          <Link to="/admin" className="btn-pill btn-pill-outline header-nav-admin">Panel Admin</Link>
+        )}
         {token ? (
           <>
             <span className="header-user">Hola, {usuario?.nombre ?? 'Usuario'}</span>
@@ -56,7 +60,11 @@ export default function Header() {
       {open && (
         <div className="mobile-menu">
           <Link to="/" className="mobile-nav-link" onClick={close}>Eventos</Link>
-          <Link to="/mis-entradas" className="mobile-nav-link" onClick={close}>Mis entradas</Link>
+          {token && <Link to="/mis-entradas" className="mobile-nav-link" onClick={close}>Mis entradas</Link>}
+          {token && <Link to="/mis-favoritos" className="mobile-nav-link" onClick={close}>Mis favoritos</Link>}
+          {token && usuario?.rol === 'admin' && (
+            <Link to="/admin" className="mobile-nav-link" onClick={close} style={{ color: '#fbbf24' }}>Panel Admin</Link>
+          )}
           {token ? (
             <>
               <span className="mobile-user">Hola, {usuario?.nombre ?? 'Usuario'}</span>

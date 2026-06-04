@@ -102,3 +102,4 @@ func (d *EntradaDAO) CambiarDueno(tx *gorm.DB, entradaID uint, nuevoUsuarioID ui
 		Where("id = ?", entradaID).
 		UpdateColumn("usuario_id", nuevoUsuarioID).Error
 }
+

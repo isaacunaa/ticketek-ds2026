@@ -3,13 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import client from '../api/client'
 
 const EMOJI = {
-  'Música':     '🎵',
-  'Humor':      '😂',
-  'Teatro':     '🎭',
-  'Deportes':   '⚽',
-  'Arte':       '🎨',
-  'Cine':       '🎬',
-  'Tecnología': '💻',
+  'Música': '🎵', 'Humor': '😂', 'Teatro': '🎭', 'Deportes': '⚽',
+  'Arte': '🎨', 'Cine': '🎬', 'Tecnología': '💻',
 }
 const getEmoji = (cat) => EMOJI[cat] ?? '🎉'
 
@@ -22,41 +17,70 @@ export default function EventoDetalle() {
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState('')
 
+  const [cantidad,    setCantidad]    = useState(1)
   const [comprando,   setComprando]   = useState(false)
   const [compraOk,    setCompraOk]    = useState(false)
   const [compraError, setCompraError] = useState('')
 
+  const [esFavorito,   setEsFavorito]   = useState(false)
+  const [togglingFav,  setTogglingFav]  = useState(false)
+  const [suscripcion,  setSuscripcion]  = useState(null)
+
   useEffect(() => {
-    const fetch = async () => {
+    const fetchEvento = async () => {
       setLoading(true)
       setError('')
       try {
         const { data } = await client.get(`/eventos/${id}`)
         setEvento(data.evento ?? data)
       } catch (err) {
-        setError(
-          err.response?.status === 404
-            ? 'El evento no existe.'
-            : 'No se pudo cargar el evento.'
-        )
+        setError(err.response?.status === 404 ? 'El evento no existe.' : 'No se pudo cargar el evento.')
       } finally {
         setLoading(false)
       }
     }
-    fetch()
+    fetchEvento()
   }, [id])
+
+  useEffect(() => {
+    if (!token) return
+    client.get('/favoritos')
+      .then(({ data }) => {
+        const ids = (data.favoritos ?? []).map(fav => fav.evento_id)
+        setEsFavorito(ids.includes(Number(id)))
+      })
+      .catch(() => {})
+    client.get('/club/estado')
+      .then(({ data }) => setSuscripcion(data))
+      .catch(() => {})
+  }, [id, token])
+
+  const handleToggleFavorito = async () => {
+    if (!token) { navigate('/login'); return }
+    setTogglingFav(true)
+    try {
+      if (esFavorito) {
+        await client.delete(`/favoritos/${id}`)
+        setEsFavorito(false)
+      } else {
+        await client.post(`/favoritos/${id}`)
+        setEsFavorito(true)
+      }
+    } catch { /* ignore */ } finally {
+      setTogglingFav(false)
+    }
+  }
 
   const handleComprar = async () => {
     if (!token) { navigate('/login'); return }
-
     setComprando(true)
     setCompraError('')
     try {
-      await client.post('/entradas', { evento_id: Number(id) })
+      await client.post('/entradas', { evento_id: Number(id), cantidad })
       setCompraOk(true)
     } catch (err) {
       setCompraError(
-        err.response?.data?.error   ||
+        err.response?.data?.error ||
         err.response?.data?.message ||
         'No se pudo completar la compra.'
       )
@@ -65,7 +89,6 @@ export default function EventoDetalle() {
     }
   }
 
-  /* ── Estados de carga ───────────────────────────────────── */
   if (loading) return (
     <div className="detalle-page">
       <div className="state-box"><span className="spinner" /><p>Cargando evento...</p></div>
@@ -81,26 +104,23 @@ export default function EventoDetalle() {
     </div>
   )
 
-  /* ── Datos del evento ───────────────────────────────────── */
   const nombre = evento.nombre || evento.titulo || 'Sin nombre'
   const emoji  = getEmoji(evento.categoria)
 
   const fechaFmt = evento.fecha_hora
-    ? new Date(evento.fecha_hora).toLocaleDateString('es-AR', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-      })
+    ? new Date(evento.fecha_hora).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     : null
-
   const horaFmt = evento.fecha_hora
-    ? new Date(evento.fecha_hora).toLocaleTimeString('es-AR', {
-        hour: '2-digit', minute: '2-digit',
-      })
+    ? new Date(evento.fecha_hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
     : null
 
-  const precioLabel =
-    evento.precio == null ? null :
-    evento.precio === 0   ? 'Gratis' :
-    `$${Number(evento.precio).toLocaleString('es-AR')}`
+  const precioBase    = evento.precio ?? 0
+  const hayDescuento  = suscripcion?.activa && precioBase > 0
+  const precioUnitario = hayDescuento ? Math.round(precioBase * 0.9 * 100) / 100 : precioBase
+  const precioTotal   = precioUnitario * cantidad
+
+  const precioLabel = precioBase === 0 ? 'Gratis' : `$${Number(precioBase).toLocaleString('es-AR')}`
+  const totalLabel  = precioBase === 0 ? 'Gratis' : `$${Number(precioTotal).toLocaleString('es-AR')}`
 
   return (
     <div className="detalle-page">
@@ -110,7 +130,6 @@ export default function EventoDetalle() {
         <div className="detalle-grid">
           {/* ── Columna principal ─────────────────────────── */}
           <div className="detalle-main">
-            {/* Placeholder imagen */}
             <div className="detalle-placeholder">{emoji}</div>
 
             <div className="detalle-content">
@@ -156,20 +175,60 @@ export default function EventoDetalle() {
 
           {/* ── Sidebar de compra ─────────────────────────── */}
           <aside className="detalle-sidebar">
+
             {/* Precio */}
-            {precioLabel && (
-              <p className={`sidebar-price ${evento.precio === 0 ? 'sidebar-price-free' : ''}`}>
-                {precioLabel}
-              </p>
-            )}
+            <div className="sidebar-precio-wrap">
+              {hayDescuento ? (
+                <>
+                  <div className="sidebar-precio-descuento">
+                    <span className="precio-tachado-lg">{precioLabel}</span>
+                    <span className="badge-descuento">10% OFF</span>
+                  </div>
+                  <p className="sidebar-price">${Number(precioUnitario).toLocaleString('es-AR')}</p>
+                  <p className="sidebar-precio-club">💜 Precio Club Vórtice</p>
+                </>
+              ) : (
+                <>
+                  <p className={`sidebar-price ${precioBase === 0 ? 'sidebar-price-free' : ''}`}>
+                    {precioLabel}
+                  </p>
+                  {precioBase > 0 && <p className="sidebar-precio-label">por entrada</p>}
+                </>
+              )}
+            </div>
 
             <hr className="sidebar-divider" />
+
+            {/* Selector de cantidad */}
+            {!compraOk && token && precioBase > 0 && (
+              <div className="cantidad-wrap">
+                <label className="cantidad-label">Cantidad de entradas</label>
+                <div className="cantidad-control">
+                  <button
+                    className="cantidad-btn"
+                    onClick={() => setCantidad(c => Math.max(1, c - 1))}
+                    disabled={cantidad <= 1}
+                  >−</button>
+                  <span className="cantidad-valor">{cantidad}</span>
+                  <button
+                    className="cantidad-btn"
+                    onClick={() => setCantidad(c => Math.min(10, c + 1))}
+                    disabled={cantidad >= 10}
+                  >+</button>
+                </div>
+                {cantidad > 1 && (
+                  <p className="cantidad-total">
+                    Total: <strong>{totalLabel}</strong>
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Feedback de compra */}
             {compraOk && (
               <div className="alert alert-success">
-                ✅ ¡Entrada comprada!{' '}
-                <Link to="/mis-entradas">Ver mis entradas →</Link>
+                ✅ {cantidad > 1 ? `${cantidad} entradas compradas` : '¡Entrada comprada!'}
+                {' '}<Link to="/mis-entradas">Ver mis entradas →</Link>
               </div>
             )}
 
@@ -177,15 +236,11 @@ export default function EventoDetalle() {
               <div className="alert alert-error">⚠️ {compraError}</div>
             )}
 
-            {/* Botón / mensaje de login */}
+            {/* Botón comprar / login */}
             {!compraOk && (
               token ? (
-                <button
-                  className="sidebar-btn"
-                  onClick={handleComprar}
-                  disabled={comprando}
-                >
-                  {comprando ? 'Procesando...' : '🎟️ Comprar entrada'}
+                <button className="sidebar-btn" onClick={handleComprar} disabled={comprando}>
+                  {comprando ? 'Procesando...' : cantidad > 1 ? `🎟️ Comprar ${cantidad} entradas` : '🎟️ Comprar entrada'}
                 </button>
               ) : (
                 <>
@@ -197,6 +252,17 @@ export default function EventoDetalle() {
                   </Link>
                 </>
               )
+            )}
+
+            {/* Favorito */}
+            {token && (
+              <button
+                className={`btn-favorito${esFavorito ? ' btn-favorito-active' : ''}`}
+                onClick={handleToggleFavorito}
+                disabled={togglingFav}
+              >
+                {togglingFav ? '...' : esFavorito ? '♥ En favoritos' : '♡ Agregar a favoritos'}
+              </button>
             )}
 
           </aside>
