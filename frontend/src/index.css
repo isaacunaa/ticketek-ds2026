@@ -1300,6 +1300,20 @@ body { overflow-x: hidden; }
   color: #fff;
 }
 
+.club-btn-cancelar {
+  background: none;
+  border: none;
+  color: rgba(110,231,183,.55);
+  font-size: .78rem;
+  font-family: var(--font);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: .2rem 0;
+  transition: color var(--transition);
+}
+.club-btn-cancelar:hover:not(:disabled) { color: #f87171; }
+.club-btn-cancelar:disabled { opacity: .4; cursor: not-allowed; }
+
 .club-activo-acciones {
   display: flex;
   flex-direction: column;

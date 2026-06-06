@@ -31,6 +31,32 @@ const CATEGORIAS = [
   { label: 'Espectáculo',  value: 'espectáculo' },
 ]
 
+/* ── Modal cancelar membresía ────────────────────────────── */
+function ModalCancelarClub({ onClose, onConfirm, cancelando }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Cancelar membresía</h3>
+          <button className="modal-close-btn" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <p className="modal-desc">
+            ¿Confirmás la cancelación de tu membresía del <strong>Club Vórtice</strong>?
+            Perderás el descuento del 10% en todas las entradas de forma inmediata.
+          </p>
+          <div className="modal-footer">
+            <button className="btn-modal-cancel" onClick={onClose}>No, mantener</button>
+            <button className="btn-modal-confirm btn-modal-danger" onClick={onConfirm} disabled={cancelando}>
+              {cancelando ? 'Cancelando...' : 'Sí, cancelar membresía'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ── Club Vórtice Banner ─────────────────────────────────── */
 function ClubVortice({ suscripcion, onSuscribir, suscribiendo, onCancelar, cancelando }) {
   if (!token()) return null
@@ -169,7 +195,8 @@ export default function Home() {
   const [favoritoIds,   setFavoritoIds]   = useState(new Set())
   const [suscripcion,   setSuscripcion]   = useState(null)
   const [suscribiendo,  setSuscribiendo]  = useState(false)
-  const [cancelando,    setCancelando]    = useState(false)
+  const [cancelando,       setCancelando]       = useState(false)
+  const [modalCancelarClub, setModalCancelarClub] = useState(false)
   const [clubFeedback,  setClubFeedback]  = useState('')
 
   const inputRef = useRef(null)
@@ -258,16 +285,17 @@ export default function Home() {
   }, [search]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCancelarSuscripcion = async () => {
-    if (!window.confirm('¿Cancelar tu membresía del Club Vórtice? Perderás el descuento del 10%.')) return
     setCancelando(true)
     try {
       const { data } = await client.delete('/club/suscripcion')
       const { data: estado } = await client.get('/club/estado')
       setSuscripcion(estado)
+      setModalCancelarClub(false)
       setClubFeedback(data.mensaje || 'Membresía cancelada.')
       setTimeout(() => setClubFeedback(''), 5000)
     } catch {
       setClubFeedback('❌ No se pudo cancelar la membresía.')
+      setModalCancelarClub(false)
     } finally {
       setCancelando(false)
     }
@@ -304,7 +332,7 @@ export default function Home() {
         suscripcion={suscripcion}
         onSuscribir={handleSuscribir}
         suscribiendo={suscribiendo}
-        onCancelar={handleCancelarSuscripcion}
+        onCancelar={() => setModalCancelarClub(true)}
         cancelando={cancelando}
       />
 
@@ -370,6 +398,14 @@ export default function Home() {
           </>
         )}
       </section>
+
+      {modalCancelarClub && (
+        <ModalCancelarClub
+          onClose={() => setModalCancelarClub(false)}
+          onConfirm={handleCancelarSuscripcion}
+          cancelando={cancelando}
+        />
+      )}
     </>
   )
 }
