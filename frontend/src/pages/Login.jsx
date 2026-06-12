@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import client from '../api/client'
+import { parsearErrorAPI } from '../utils/errores'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -24,11 +25,11 @@ export default function Login() {
       localStorage.setItem('usuario', JSON.stringify(data.usuario))
       navigate('/')
     } catch (err) {
-      setError(
+      setError(parsearErrorAPI(
         err.response?.data?.error   ||
         err.response?.data?.message ||
         'Credenciales incorrectas.'
-      )
+      ))
     } finally {
       setLoading(false)
     }

@@ -8,11 +8,11 @@ const FIELD_LABEL = {
 }
 
 const TAG_MSG = {
-  required: 'es obligatorio.',
-  email:    'no tiene un formato válido.',
-  min:      'es demasiado corto.',
-  max:      'es demasiado largo.',
-  alphanum: 'solo puede contener letras y números.',
+  required: 'Es obligatorio.',
+  email:    'No tiene un formato válido.',
+  min:      'Es demasiado corto.',
+  max:      'Es demasiado largo.',
+  alphanum: 'Solo puede contener letras y números.',
 }
 
 export const parsearErrorAPI = (error) => {
