@@ -29,9 +29,9 @@ export default function Footer() {
         <div>
           <p className="footer-col-title">Legal</p>
           <ul className="footer-links">
-            <li><a href="#">Términos y condiciones</a></li>
-            <li><a href="#">Política de privacidad</a></li>
-            <li><a href="#">Política de reembolso</a></li>
+            <li><Link to="/terminos">Términos y condiciones</Link></li>
+            <li><Link to="/privacidad">Política de privacidad</Link></li>
+            <li><Link to="/reembolsos">Política de reembolso</Link></li>
           </ul>
         </div>
       </div>

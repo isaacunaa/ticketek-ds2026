@@ -13,6 +13,48 @@ const EMOJI = {
 }
 const getEmoji = (cat) => EMOJI[cat] ?? '🎉'
 
+/* ── Modal de confirmación de cancelación ────────────────── */
+function ModalConfirmarCancelacion({ nombreEvento, onClose, onConfirm }) {
+  const [loading, setLoading] = useState(false)
+
+  const handleConfirm = async () => {
+    setLoading(true)
+    await onConfirm()
+    setLoading(false)
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Cancelar entrada</h3>
+          <button className="modal-close-btn" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="confirm-icon">🎟️</div>
+          <p className="confirm-title">¿Cancelar esta entrada?</p>
+          <p className="confirm-desc">
+            Estás por cancelar tu entrada para <strong>{nombreEvento}</strong>.
+            Esta acción no se puede deshacer.
+          </p>
+          <div className="modal-footer">
+            <button className="btn-modal-cancel" onClick={onClose}>
+              Volver
+            </button>
+            <button
+              className="btn-modal-danger"
+              onClick={handleConfirm}
+              disabled={loading}
+            >
+              {loading ? 'Cancelando...' : 'Sí, cancelar entrada'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ── Modal de traspaso ───────────────────────────────────── */
 function ModalTraspaso({ entradaId, onClose, onSuccess }) {
   const [email,   setEmail]   = useState('')
@@ -91,15 +133,13 @@ function ModalTraspaso({ entradaId, onClose, onSuccess }) {
 }
 
 /* ── EntradaCard ─────────────────────────────────────────── */
-function EntradaCard({ entrada, onCancelar, onTraspasar }) {
-  const [cancelando, setCancelando] = useState(false)
-
+function EntradaCard({ entrada, onCancelarRequest, onTraspasar }) {
   const evento = entrada.evento || {}
-  const nombre = evento.nombre || evento.titulo || `Evento #${entrada.evento_id}`
+  const nombre = evento.titulo || `Evento #${entrada.evento_id}`
   const emoji  = getEmoji(evento.categoria)
 
-  const fechaEvento = evento.fecha
-    ? new Date(evento.fecha).toLocaleDateString('es-AR', {
+  const fechaEvento = evento.fecha_hora
+    ? new Date(evento.fecha_hora).toLocaleDateString('es-AR', {
         weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
       })
     : null
@@ -120,13 +160,6 @@ function EntradaCard({ entrada, onCancelar, onTraspasar }) {
     esCancelada  ? 'Cancelada'  :
     esTraspasada ? 'Traspasada' : 'Activa'
 
-  const handleCancelar = async () => {
-    if (!window.confirm('¿Confirmás la cancelación de esta entrada? Esta acción no se puede deshacer.')) return
-    setCancelando(true)
-    try { await onCancelar(entrada.id) }
-    finally { setCancelando(false) }
-  }
-
   return (
     <div className={`entrada-card${!esActiva ? ' cancelada' : ''}`}>
       {/* Ícono + estado */}
@@ -141,7 +174,7 @@ function EntradaCard({ entrada, onCancelar, onTraspasar }) {
           <Link to={`/eventos/${entrada.evento_id}`}>{nombre}</Link>
         </p>
         {fechaEvento && <p className="entrada-meta">📅 {fechaEvento}</p>}
-        {evento.lugar && <p className="entrada-meta">📍 {evento.lugar}</p>}
+        {evento.ubicacion && <p className="entrada-meta">📍 {evento.ubicacion}</p>}
         {fechaCompraFmt && (
           <p className="entrada-compra-date">Comprada el {fechaCompraFmt}</p>
         )}
@@ -158,10 +191,9 @@ function EntradaCard({ entrada, onCancelar, onTraspasar }) {
           </button>
           <button
             className="btn-action btn-action-cancel"
-            onClick={handleCancelar}
-            disabled={cancelando}
+            onClick={() => onCancelarRequest(entrada.id, nombre)}
           >
-            {cancelando ? '...' : '✕ Cancelar'}
+            ✕ Cancelar
           </button>
         </div>
       )}
@@ -175,7 +207,9 @@ export default function MisEntradas() {
   const [loading,     setLoading]     = useState(true)
   const [error,       setError]       = useState('')
   const [traspasarId, setTraspasarId] = useState(null)
-  const [feedback,    setFeedback]    = useState(null) // { type, msg }
+  const [feedback,    setFeedback]    = useState(null)
+  // { id, nombre } del modal de cancelación
+  const [cancelarModal, setCancelarModal] = useState(null)
 
   const fetchEntradas = useCallback(async () => {
     setLoading(true)
@@ -194,9 +228,14 @@ export default function MisEntradas() {
 
   useEffect(() => { fetchEntradas() }, [fetchEntradas])
 
-  const handleCancelar = async (id) => {
+  const handleCancelarRequest = (id, nombre) => {
+    setCancelarModal({ id, nombre })
+  }
+
+  const handleCancelarConfirm = async () => {
+    if (!cancelarModal) return
     try {
-      await client.delete(`/entradas/${id}`)
+      await client.delete(`/entradas/${cancelarModal.id}`)
       setFeedback({ type: 'success', msg: 'Entrada cancelada correctamente.' })
       fetchEntradas()
     } catch (err) {
@@ -204,6 +243,8 @@ export default function MisEntradas() {
         type: 'error',
         msg: err.response?.data?.error || err.response?.data?.message || 'No se pudo cancelar.',
       })
+    } finally {
+      setCancelarModal(null)
     }
   }
 
@@ -270,7 +311,7 @@ export default function MisEntradas() {
                 <EntradaCard
                   key={e.id}
                   entrada={e}
-                  onCancelar={handleCancelar}
+                  onCancelarRequest={handleCancelarRequest}
                   onTraspasar={setTraspasarId}
                 />
               ))}
@@ -289,7 +330,7 @@ export default function MisEntradas() {
                 <EntradaCard
                   key={e.id}
                   entrada={e}
-                  onCancelar={handleCancelar}
+                  onCancelarRequest={handleCancelarRequest}
                   onTraspasar={setTraspasarId}
                 />
               ))}
@@ -304,6 +345,15 @@ export default function MisEntradas() {
           entradaId={traspasarId}
           onClose={() => setTraspasarId(null)}
           onSuccess={handleTraspasoOk}
+        />
+      )}
+
+      {/* Modal de cancelación */}
+      {cancelarModal && (
+        <ModalConfirmarCancelacion
+          nombreEvento={cancelarModal.nombre}
+          onClose={() => setCancelarModal(null)}
+          onConfirm={handleCancelarConfirm}
         />
       )}
     </div>

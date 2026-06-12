@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import client from '../api/client'
+import { parsearErrorAPI } from '../utils/errores'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -25,11 +26,11 @@ export default function Register() {
       // Registro exitoso → redirige a login con mensaje implícito
       navigate('/login')
     } catch (err) {
-      setError(
+      setError(parsearErrorAPI(
         err.response?.data?.error   ||
         err.response?.data?.message ||
         'Error al crear la cuenta. Intentá de nuevo.'
-      )
+      ))
     } finally {
       setLoading(false)
     }

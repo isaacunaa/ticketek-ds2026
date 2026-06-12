@@ -1,17 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import client from '../api/client'
-
-const EMOJI = {
-  'Música':     '🎵',
-  'Humor':      '😂',
-  'Teatro':     '🎭',
-  'Deportes':   '⚽',
-  'Arte':       '🎨',
-  'Cine':       '🎬',
-  'Tecnología': '💻',
-}
-const getEmoji = (cat) => EMOJI[cat] ?? '🎉'
+import { getImagenEvento, normalizarCategorias } from '../utils/eventos'
 
 export default function EventoDetalle() {
   const { id }   = useParams()
@@ -26,13 +16,16 @@ export default function EventoDetalle() {
   const [compraOk,    setCompraOk]    = useState(false)
   const [compraError, setCompraError] = useState('')
 
+  const [esFavorito,   setEsFavorito]   = useState(false)
+  const [togglingFav,  setTogglingFav]  = useState(false)
+
   useEffect(() => {
     const fetch = async () => {
       setLoading(true)
       setError('')
       try {
         const { data } = await client.get(`/eventos/${id}`)
-        setEvento(data)
+        setEvento(data.evento ?? data)
       } catch (err) {
         setError(
           err.response?.status === 404
@@ -45,6 +38,34 @@ export default function EventoDetalle() {
     }
     fetch()
   }, [id])
+
+  useEffect(() => {
+    if (!token) return
+    client.get('/favoritos')
+      .then(({ data }) => {
+        const ids = (data.favoritos ?? []).map((f) => f.evento_id)
+        setEsFavorito(ids.includes(Number(id)))
+      })
+      .catch(() => {})
+  }, [id, token])
+
+  const handleToggleFavorito = async () => {
+    if (!token) { navigate('/login'); return }
+    setTogglingFav(true)
+    try {
+      if (esFavorito) {
+        await client.delete(`/favoritos/${id}`)
+        setEsFavorito(false)
+      } else {
+        await client.post(`/favoritos/${id}`)
+        setEsFavorito(true)
+      }
+    } catch {
+      // silencioso — el estado no cambia
+    } finally {
+      setTogglingFav(false)
+    }
+  }
 
   const handleComprar = async () => {
     if (!token) { navigate('/login'); return }
@@ -82,17 +103,18 @@ export default function EventoDetalle() {
   )
 
   /* ── Datos del evento ───────────────────────────────────── */
-  const nombre = evento.nombre || evento.titulo || 'Sin nombre'
-  const emoji  = getEmoji(evento.categoria)
+  const nombre     = evento.titulo || 'Sin nombre'
+  const imagenUrl  = getImagenEvento(evento)
+  const categorias = normalizarCategorias(evento.categoria)
 
-  const fechaFmt = evento.fecha
-    ? new Date(evento.fecha).toLocaleDateString('es-AR', {
+  const fechaFmt = evento.fecha_hora
+    ? new Date(evento.fecha_hora).toLocaleDateString('es-AR', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
       })
     : null
 
-  const horaFmt = evento.fecha
-    ? new Date(evento.fecha).toLocaleTimeString('es-AR', {
+  const horaFmt = evento.fecha_hora
+    ? new Date(evento.fecha_hora).toLocaleTimeString('es-AR', {
         hour: '2-digit', minute: '2-digit',
       })
     : null
@@ -110,12 +132,15 @@ export default function EventoDetalle() {
         <div className="detalle-grid">
           {/* ── Columna principal ─────────────────────────── */}
           <div className="detalle-main">
-            {/* Placeholder imagen */}
-            <div className="detalle-placeholder">{emoji}</div>
+            <img src={imagenUrl} alt={nombre} className="detalle-img" />
 
             <div className="detalle-content">
-              {evento.categoria && (
-                <span className="detalle-badge">{evento.categoria}</span>
+              {categorias.length > 0 && (
+                <div className="event-badges" style={{ marginBottom: '.85rem' }}>
+                  {categorias.map((cat) => (
+                    <span key={cat} className="detalle-badge">{cat}</span>
+                  ))}
+                </div>
               )}
 
               <h1 className="detalle-title">{nombre}</h1>
@@ -127,10 +152,10 @@ export default function EventoDetalle() {
                     <span>{fechaFmt}{horaFmt ? ` · ${horaFmt} hs` : ''}</span>
                   </div>
                 )}
-                {evento.lugar && (
+                {evento.ubicacion && (
                   <div className="detalle-meta-item">
                     <span>📍</span>
-                    <span>{evento.lugar}</span>
+                    <span>{evento.ubicacion}</span>
                   </div>
                 )}
                 {precioLabel && (
@@ -141,10 +166,10 @@ export default function EventoDetalle() {
                     </span>
                   </div>
                 )}
-                {evento.capacidad != null && (
+                {evento.cupo_total != null && (
                   <div className="detalle-meta-item">
                     <span>👥</span>
-                    <span>Capacidad: {evento.capacidad} personas</span>
+                    <span>Capacidad: {evento.cupo_total} personas</span>
                   </div>
                 )}
               </div>
@@ -168,6 +193,17 @@ export default function EventoDetalle() {
             )}
 
             <hr className="sidebar-divider" />
+
+            {/* Botón favorito */}
+            {token && (
+              <button
+                className={`btn-fav${esFavorito ? ' btn-fav-active' : ''}`}
+                onClick={handleToggleFavorito}
+                disabled={togglingFav}
+              >
+                {togglingFav ? '...' : esFavorito ? '♥ En favoritos' : '♡ Guardar favorito'}
+              </button>
+            )}
 
             {/* Feedback de compra */}
             {compraOk && (
@@ -205,10 +241,10 @@ export default function EventoDetalle() {
 
             {/* Info extra en sidebar */}
             <div className="sidebar-info">
-              {evento.lugar && (
+              {evento.ubicacion && (
                 <div className="sidebar-info-row">
                   <span>📍</span>
-                  <span>{evento.lugar}</span>
+                  <span>{evento.ubicacion}</span>
                 </div>
               )}
               {fechaFmt && (

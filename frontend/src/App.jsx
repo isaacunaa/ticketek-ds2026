@@ -7,6 +7,10 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import EventoDetalle from './pages/EventoDetalle'
 import MisEntradas from './pages/MisEntradas'
+import MisFavoritos from './pages/MisFavoritos'
+import Terminos from './pages/legal/Terminos'
+import Privacidad from './pages/legal/Privacidad'
+import Reembolsos from './pages/legal/Reembolsos'
 
 export default function App() {
   return (
@@ -22,7 +26,7 @@ export default function App() {
         <Route path="/register"    element={<Register />} />
         <Route path="/eventos/:id" element={<EventoDetalle />} />
 
-        {/* Protegida — redirige a /login si no hay token */}
+        {/* Protegidas — redirigen a /login si no hay token */}
         <Route
           path="/mis-entradas"
           element={
@@ -31,6 +35,19 @@ export default function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/mis-favoritos"
+          element={
+            <PrivateRoute>
+              <MisFavoritos />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Legal */}
+        <Route path="/terminos"   element={<Terminos />} />
+        <Route path="/privacidad" element={<Privacidad />} />
+        <Route path="/reembolsos" element={<Reembolsos />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

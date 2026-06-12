@@ -1,28 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import client from '../api/client'
-
-/* ── Mapeo categoría → emoji ─────────────────────────────── */
-const EMOJI = {
-  'Música':     '🎵',
-  'Humor':      '😂',
-  'Teatro':     '🎭',
-  'Deportes':   '⚽',
-  'Arte':       '🎨',
-  'Cine':       '🎬',
-  'Tecnología': '💻',
-}
-const getEmoji = (cat) => EMOJI[cat] ?? '🎉'
+import { getImagenEvento, normalizarCategorias } from '../utils/eventos'
 
 const CATEGORIAS = ['Todos', 'Música', 'Humor', 'Teatro', 'Deportes', 'Arte']
 
 /* ── EventCard ───────────────────────────────────────────── */
-function EventCard({ evento }) {
-  const nombre = evento.nombre || evento.titulo || 'Sin nombre'
-  const emoji  = getEmoji(evento.categoria)
+function EventCard({ evento, isFavorito, onToggleFav }) {
+  const token    = localStorage.getItem('token')
+  const nombre    = evento.titulo || 'Sin nombre'
+  const imagenUrl = getImagenEvento(evento)
+  const categorias = normalizarCategorias(evento.categoria)
+  const [toggling, setToggling] = useState(false)
 
-  const fecha = evento.fecha
-    ? new Date(evento.fecha).toLocaleDateString('es-AR', {
+  const fecha = evento.fecha_hora
+    ? new Date(evento.fecha_hora).toLocaleDateString('es-AR', {
         day: 'numeric', month: 'short', year: 'numeric',
       })
     : null
@@ -32,19 +24,42 @@ function EventCard({ evento }) {
     evento.precio === 0   ? 'Gratis' :
     `$${Number(evento.precio).toLocaleString('es-AR')}`
 
+  const handleFav = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setToggling(true)
+    try { await onToggleFav(evento.id, isFavorito) }
+    finally { setToggling(false) }
+  }
+
   return (
     <Link to={`/eventos/${evento.id}`} className="event-card">
-      {/* Placeholder de imagen */}
-      <div className="event-placeholder">{emoji}</div>
+      <div className="event-img-wrap">
+        <img src={imagenUrl} alt={nombre} className="event-img" loading="lazy" />
+        {token && (
+          <button
+            className={`card-fav-btn${isFavorito ? ' card-fav-active' : ''}`}
+            onClick={handleFav}
+            disabled={toggling}
+            title={isFavorito ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+          >
+            {toggling ? '·' : isFavorito ? '♥' : '♡'}
+          </button>
+        )}
+      </div>
 
       <div className="event-body">
-        {evento.categoria && (
-          <span className="event-category-badge">{evento.categoria}</span>
+        {categorias.length > 0 && (
+          <div className="event-badges">
+            {categorias.map((cat) => (
+              <span key={cat} className="event-category-badge">{cat}</span>
+            ))}
+          </div>
         )}
         <h3 className="event-title">{nombre}</h3>
-        {evento.lugar && <p className="event-venue">📍 {evento.lugar}</p>}
-        {fecha         && <p className="event-date">📅 {fecha}</p>}
-        {precioLabel   && (
+        {evento.ubicacion && <p className="event-venue">📍 {evento.ubicacion}</p>}
+        {fecha            && <p className="event-date">📅 {fecha}</p>}
+        {precioLabel      && (
           <p style={{ fontWeight: 700, color: 'var(--accent-dark)', fontSize: '.92rem', marginTop: '.2rem' }}>
             {precioLabel}
           </p>
@@ -60,13 +75,15 @@ function EventCard({ evento }) {
 
 /* ── Home ────────────────────────────────────────────────── */
 export default function Home() {
+  const token = localStorage.getItem('token')
+
   const [eventos,   setEventos]   = useState([])
+  const [favIds,    setFavIds]    = useState(new Set())
   const [search,    setSearch]    = useState('')
   const [categoria, setCategoria] = useState('Todos')
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState('')
 
-  // Ref para el input del hero
   const inputRef = useRef(null)
 
   const fetchEventos = useCallback(async () => {
@@ -74,13 +91,11 @@ export default function Home() {
     setError('')
     try {
       const params = {}
-      if (search.trim())        params.search    = search.trim()
+      if (search.trim())         params.search    = search.trim()
       if (categoria !== 'Todos') params.categoria = categoria
 
       const { data } = await client.get('/eventos', { params })
-      const lista = Array.isArray(data)
-        ? data
-        : data.eventos ?? data.data ?? []
+      const lista = Array.isArray(data) ? data : data.eventos ?? data.data ?? []
       setEventos(lista)
     } catch (err) {
       setError('No se pudieron cargar los eventos. Verificá que el backend esté corriendo en http://localhost:8080.')
@@ -90,14 +105,37 @@ export default function Home() {
     }
   }, [search, categoria])
 
-  // Fetch en montaje y cuando cambia la categoría (inmediato)
   useEffect(() => { fetchEventos() }, [categoria]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Debounce del buscador (400 ms)
   useEffect(() => {
     const t = setTimeout(() => { fetchEventos() }, 400)
     return () => clearTimeout(t)
   }, [search]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Carga favoritos si hay sesión
+  useEffect(() => {
+    if (!token) return
+    client.get('/favoritos')
+      .then(({ data }) => {
+        const ids = (data.favoritos ?? []).map((f) => f.evento_id)
+        setFavIds(new Set(ids))
+      })
+      .catch(() => {})
+  }, [token])
+
+  const handleToggleFav = async (eventoId, esFavorito) => {
+    try {
+      if (esFavorito) {
+        await client.delete(`/favoritos/${eventoId}`)
+        setFavIds((prev) => { const s = new Set(prev); s.delete(eventoId); return s })
+      } else {
+        await client.post(`/favoritos/${eventoId}`)
+        setFavIds((prev) => new Set([...prev, eventoId]))
+      }
+    } catch {
+      // silencioso
+    }
+  }
 
   const handleClearFilters = () => {
     setSearch('')
@@ -107,7 +145,6 @@ export default function Home() {
 
   return (
     <>
-      {/* ── Hero ─────────────────────────────────────────── */}
       <section className="hero">
         <h1 className="hero-title">Encontrá tu próximo evento</h1>
         <p className="hero-subtitle">Música, teatro, deporte y mucho más</p>
@@ -125,7 +162,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Barra de categorías ───────────────────────────── */}
       <div className="category-bar">
         {CATEGORIAS.map((cat) => (
           <button
@@ -138,9 +174,7 @@ export default function Home() {
         ))}
       </div>
 
-      {/* ── Grilla de eventos ─────────────────────────────── */}
       <section className="events-section">
-        {/* Estados */}
         {loading && (
           <div className="state-box">
             <span className="spinner" />
@@ -171,7 +205,12 @@ export default function Home() {
             </p>
             <div className="events-grid">
               {eventos.map((ev) => (
-                <EventCard key={ev.id} evento={ev} />
+                <EventCard
+                  key={ev.id}
+                  evento={ev}
+                  isFavorito={favIds.has(ev.id)}
+                  onToggleFav={handleToggleFav}
+                />
               ))}
             </div>
           </>
