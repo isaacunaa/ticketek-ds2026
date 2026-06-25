@@ -10,7 +10,7 @@ import (
 
 var (
 	ErrEmailYaRegistrado     = errors.New("el email ya está registrado")
-	ErrCredencialesInvalidas = errors.New("credenciales inválidas")
+	ErrCredencialesInvalidas = errors.New("Email o contraseña inválidos")
 )
 
 type IAuthService interface {
