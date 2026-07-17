@@ -18,10 +18,13 @@ client.interceptors.request.use(
 )
 
 // 401 → limpia sesión y redirige a /login
+// (excepto en /auth/login: ahí el 401 es "contraseña incorrecta", no una sesión expirada,
+// y el propio formulario ya se encarga de mostrar el error sin recargar la página)
 client.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const esLoginRequest = error.config?.url?.includes('/auth/login')
+    if (error.response?.status === 401 && !esLoginRequest) {
       localStorage.removeItem('token')
       localStorage.removeItem('usuario')
       window.location.href = '/login'
