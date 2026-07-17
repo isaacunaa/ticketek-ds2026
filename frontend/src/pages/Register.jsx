@@ -9,6 +9,7 @@ export default function Register() {
   })
   const [error,   setError]   = useState('')
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -22,8 +23,8 @@ export default function Register() {
 
     try {
       await client.post('/auth/register', form)
-      // Registro exitoso → redirige a login con mensaje implícito
-      navigate('/login')
+      setSuccess(true)
+      setTimeout(() => navigate('/login'), 2000)
     } catch (err) {
       const raw = err.response?.data?.error || err.response?.data?.message || ''
       const esErrorTecnico = raw.startsWith('Key:') || raw.includes('Error:Field')
@@ -106,14 +107,17 @@ export default function Register() {
             />
           </div>
 
+          {success && (
+            <p className="alert alert-success">¡Cuenta creada! Redirigiendo...</p>
+          )}
           {error && <p className="form-error">{error}</p>}
 
           <button
             type="submit"
             className="btn-submit"
-            disabled={loading}
+            disabled={loading || success}
           >
-            {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+            {success ? 'Cuenta creada' : loading ? 'Creando cuenta...' : 'Crear cuenta'}
           </button>
         </form>
 
