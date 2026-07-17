@@ -1,6 +1,6 @@
 module github.com/isaacunaa/ticketek-ds2026/backend
 
-go 1.26.3
+go 1.24
 
 require (
 	github.com/gin-contrib/cors v1.7.7
