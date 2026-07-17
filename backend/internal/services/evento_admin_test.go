@@ -117,8 +117,8 @@ func TestObtenerReporte_Exito(t *testing.T) {
 
 	evento := &domain.Evento{ID: 1, Titulo: "Festival", CupoTotal: 100, CupoDisponible: 70}
 	entradas := []domain.Entrada{
-		{ID: 1, UsuarioID: 10, FechaCompra: time.Now()},
-		{ID: 2, UsuarioID: 20, FechaCompra: time.Now()},
+		{ID: 1, UsuarioID: 10, Estado: "activa", FechaCompra: time.Now()},
+		{ID: 2, UsuarioID: 20, Estado: "activa", FechaCompra: time.Now()},
 	}
 	usuarios := []domain.Usuario{
 		{ID: 10, Nombre: "Ana", Apellido: "García", Email: "ana@test.com"},
@@ -134,8 +134,8 @@ func TestObtenerReporte_Exito(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, reporte)
-	assert.Equal(t, 30, reporte.EntradasVendidas)
-	assert.InDelta(t, 30.0, reporte.PorcentajeOcupacion, 0.01)
+	assert.Equal(t, 2, reporte.EntradasVendidas)
+	assert.InDelta(t, 2.0, reporte.PorcentajeOcupacion, 0.01)
 	assert.Len(t, reporte.Compradores, 2)
 	mockEventoDAO.AssertExpectations(t)
 	mockEntradaDAO.AssertExpectations(t)
