@@ -25,11 +25,19 @@ export default function Register() {
       // Registro exitoso → redirige a login con mensaje implícito
       navigate('/login')
     } catch (err) {
-      setError(
-        err.response?.data?.error   ||
-        err.response?.data?.message ||
-        'Error al crear la cuenta. Intentá de nuevo.'
-      )
+      const raw = err.response?.data?.error || err.response?.data?.message || ''
+      const esErrorTecnico = raw.startsWith('Key:') || raw.includes('Error:Field')
+
+      if (esErrorTecnico) {
+        const esPassword = raw.includes('Password')
+        setError(
+          esPassword
+            ? 'La contraseña debe tener al menos 6 caracteres.'
+            : 'Revisá los datos ingresados e intentá de nuevo.'
+        )
+      } else {
+        setError(raw || 'Error al crear la cuenta. Intentá de nuevo.')
+      }
     } finally {
       setLoading(false)
     }
