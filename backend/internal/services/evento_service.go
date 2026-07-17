@@ -149,7 +149,7 @@ func (s *EventoService) ObtenerReporte(eventoID uint) (*dtos.ReporteEvento, erro
 		}
 	}
 
-	vendidas := evento.CupoTotal - evento.CupoDisponible
+	vendidas := len(entradas)
 	var porcentaje float64
 	if evento.CupoTotal > 0 {
 		porcentaje = float64(vendidas) / float64(evento.CupoTotal) * 100
